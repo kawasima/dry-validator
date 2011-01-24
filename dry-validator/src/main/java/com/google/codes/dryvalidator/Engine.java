@@ -16,66 +16,92 @@ import org.mozilla.javascript.ScriptableObject;
 
 public class Engine {
 	Context ctx;
-	ScriptableObject scope;
+	ScriptableObject global;
 	Script getValidatorScript;
+	Script doValidateScript;
 
-	
+	public static class Console {
+		public void log(Object obj) {
+			System.out.println(Context.toString(obj));
+		}
+	}
 	public void setUp() {
-        ContextFactory contextFactory = ContextFactory.getGlobal();
-        ctx = contextFactory.enterContext();
-    	scope = ctx.initStandardObjects();
-    	try {
-    		loadScript("joose.js");
-    		loadScript("pf_validator.js");
-            ScriptableObject.putProperty(scope, "console", Context.javaToJS(System.out,scope));
-    	} catch(IOException e) {
-    		
-    	}
+		ContextFactory contextFactory = ContextFactory.getGlobal();
+		ctx = contextFactory.enterContext();
+		global = ctx.initStandardObjects();
+		try {
+			loadScript("joose.js");
+			loadScript("dry-validator.js");
+			ScriptableObject.putProperty(global, "console", Context.javaToJS(
+					new Console(), global));
+			ctx.evaluateString(global, "var validators = {};", "<cmd>", 1, null);
+		} catch (IOException e) {
+
+		}
 	}
 	
-	public void exec(FormItem formItem, String value) {
-        Scriptable local = ctx.newObject(scope);
-        Object wrappedValidation = Context.javaToJS(formItem , local);
-        ScriptableObject.putProperty(local, "formItem", wrappedValidation);
-        ScriptableObject.putProperty(local, "value", Context.javaToJS(value, local));
-        Object obj = getValidator().exec(ctx, local);
-        
-        List<String> messages = new ArrayList<String>();
-        if(obj instanceof NativeArray) {
-        	NativeArray array = (NativeArray)obj;
-        	for(int i=0; i<array.getLength(); i++) {
-        		String msg = Context.toString(array.get(i, local));
-        		messages.add(msg);
-        	}
-        }
-        System.out.println(messages);
+	public void register(FormItem formItem) {
+		Scriptable local = ctx.newObject(global);
+		local.setPrototype(global);
+		local.setParentScope(null);
+		Object wrappedValidation = Context.javaToJS(formItem, local);
+		ScriptableObject.putProperty(local, "formItem", wrappedValidation);
+		getValidator().exec(ctx, local);
 	}
 
+	public void exec(String id, String value) {
+		Scriptable local = ctx.newObject(global);
+		local.setPrototype(global);
+		local.setParentScope(null);
+		ScriptableObject.putProperty(local, "id", Context.javaToJS(id,
+				local));
+		ScriptableObject.putProperty(local, "value", Context.javaToJS(value,
+				local));
+		Object obj = doValidate().exec(ctx, local);
+
+		List<String> messages = new ArrayList<String>();
+		if (obj instanceof NativeArray) {
+			NativeArray array = (NativeArray) obj;
+			for (int i = 0; i < array.getLength(); i++) {
+				String msg = Context.toString(array.get(i, local));
+				messages.add(msg);
+			}
+		}
+		System.out.println(messages);
+	}
+
+	private Script doValidate() {
+		if(doValidateScript == null) {
+			doValidateScript = ctx.compileString("validators[id].validate(value);",
+					"<cmd>", 1, null);
+		}
+		return doValidateScript;
+	}
 	private Script getValidator() {
-		if(getValidatorScript == null) {
+		if (getValidatorScript == null) {
 			getValidatorScript = ctx.compileString(
 				"var validation = {label: formItem.label};\n"
-        		+ "Joose.A.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
-        		+ "var cv = PF.CompositeValidator.make(validation);\n"
-        		+ "cv.validate(value);"
-			, "<cmd>", 1, null);
+				+ "Joose.A.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
+				+ "validators[formItem.id] = DryValidator.CompositeValidator.make(validation);\n"
+				, "<cmd>", 1, null);
 		}
 		return getValidatorScript;
 	}
-	
 
 	public void loadScript(String path) throws IOException {
-        InputStreamReader in = null;
+		InputStreamReader in = null;
 
-        try {
-                in = new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream(path));
-                ctx.evaluateReader(scope, in, path, 0, null);
-        } finally {
-                IOUtils.closeQuietly(in);
-        }
-    }
+		try {
+			in = new InputStreamReader(Thread.currentThread()
+					.getContextClassLoader().getResourceAsStream(path));
+			ctx.evaluateReader(global, in, path, 0, null);
+		} finally {
+			IOUtils.closeQuietly(in);
+		}
+	}
+
 	public void dispose() {
-		if(ctx != null) {
+		if (ctx != null) {
 			Context.exit();
 		}
 	}

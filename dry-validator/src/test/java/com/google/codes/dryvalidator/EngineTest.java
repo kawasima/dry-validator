@@ -1,5 +1,7 @@
 package com.google.codes.dryvalidator;
 
+import java.util.UUID;
+
 import org.junit.Test;
 
 
@@ -9,8 +11,10 @@ public class EngineTest {
 		Engine engine = new Engine();
 		try {
 			engine.setUp();
-			for(int i=0; i<1; i++) {
-				engine.exec(getFormItem(), "あいうえおかきくけこさ4f");
+			engine.register(getFormItem());
+			for(int i=0; i<10000; i++) {
+				engine.exec("NAME", UUID.randomUUID().toString());
+				
 			}
 		} finally {
 			engine.dispose();
@@ -19,6 +23,7 @@ public class EngineTest {
 	
 	private FormItem getFormItem() {
 		FormItem formItem = new FormItem();
+		formItem.setId("NAME");
 		formItem.setLabel("氏名");
     	formItem.getValidations().addValidation(new Validation("required", "true"));
     	formItem.getValidations().addValidation(new Validation("maxLength", "10"));

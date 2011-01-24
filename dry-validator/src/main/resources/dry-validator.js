@@ -142,7 +142,7 @@ Module(moduleName, function(m) {
 			validate: function(value) {
 				var results = [];
 				Joose.A.each(this.validators, function(validator) {
-					var result = validator.validate(value)
+					var result = validator.validate(value);
 					if (result)
 						Joose.A.each(result, function(msg) { results.push(msg) });
 				});
