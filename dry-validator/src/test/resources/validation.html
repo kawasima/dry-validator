@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja">
+<head>
+	<title></title>
+	<script type="text/javascript">var dryValidatorModuleName="DV";</script>
+</head>
+<body>
+  <form>
+  	<table summary="">
+  		<tbody>
+  			<tr>
+  				<th>氏名</th>
+  				<td>氏<input type="text" id="familyName"/>名<input type="text" id="lastName"/></td>
+  			</tr>
+  			
+  		</tbody>
+  	</table>
+  </form>
+  <script type="text/javascript" src="../../../target/classes/joose.js"></script>
+  <script type="text/javascript" src="../../../target/classes/dry-validator.js"></script>
+  <script type="text/javascript" src="../../../target/classes/jquery.js"></script>  
+  <script type="text/javascript">
+  <!--
+ var xml = '<pageItem><label>コメント</label><validations><validation><name>required</name><value>true</value></validation>'
+ + '<validation><name>maxLength</name><value>10</value></validation>'
+ + '<validation><name>letterType</name><value>Zenkaku</value></validation>'
+ + '</validations></pageItem>';
+
+var xmlDoc;
+if(window.DOMParser) {
+	xmlDoc = new DOMParser().parseFromString(xml, 'text/xml');
+} else {
+	xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+	xmlDoc.async = false;
+	xmlDoc.loadXML(xml);
+}
+
+var obj = DV.DOM.parseElement(xmlDoc);
+console.log(obj.pageItem);
+var validation = {label: obj.pageItem.label};
+Joose.A.each(obj.pageItem.validations.validation, function(v) { validation[v.name] = v.value; });
+var cv = DV.CompositeValidator.make(validation);
+console.log(cv.validate());
+console.log(cv.validate("")); //NG
+console.log(cv.validate("abc")); //NG
+console.log(cv.validate("01234567890")); //NG
+console.log(cv.validate("漢字")); //OK
+console.log(cv.validate("漢字以外ですが半角は入らない")); //NG
+console.log(cv);
+
+-->
+  </script>
+</body>
+</html>
