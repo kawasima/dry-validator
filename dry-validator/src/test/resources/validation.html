@@ -19,13 +19,12 @@
   </form>
   <script type="text/javascript" src="../../../target/classes/joose.js"></script>
   <script type="text/javascript" src="../../../target/classes/dry-validator.js"></script>
-  <script type="text/javascript" src="../../../target/classes/jquery.js"></script>  
   <script type="text/javascript">
   <!--
  var xml = '<pageItem><label>コメント</label><validations><validation><name>required</name><value>true</value></validation>'
  + '<validation><name>maxLength</name><value>10</value></validation>'
  + '<validation><name>letterType</name><value>Zenkaku</value></validation>'
- + '<validation><name>function</name><value>if(!DV.$("NAME")) { return ["特別なチェック"]}</value></validation>'
+ + '<validation><name>function</name><value>if(DV.$("NAME")) { return ["特別なチェック"]}</value></validation>'
  + '</validations></pageItem>';
 
 var xmlDoc;
@@ -42,6 +41,13 @@ console.log(obj.pageItem);
 var validation = {label: obj.pageItem.label};
 Joose.A.each(obj.pageItem.validations.validation, function(v) { validation[v.name] = v.value; });
 var cv = DV.CompositeValidator.make(validation);
+var form = new DV.Form().setup({
+	NAME: 'こんにちは',
+	EMAIL: 'aiueo@kakiku.co.jp',
+	EMAIL_CONFIRM: 'aiueo'
+});
+form.each(function(item) { cv.validate(item); });
+
 console.log(cv.validate());
 console.log(cv.validate("")); //NG
 console.log(cv.validate("abc")); //NG

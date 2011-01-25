@@ -1,4 +1,4 @@
-package com.google.codes.dryvalidator;
+package com.google.codes.dryvalidator.dto;
 
 import java.io.Serializable;
 

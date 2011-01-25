@@ -3,7 +3,9 @@ package com.google.codes.dryvalidator;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.mozilla.javascript.Script;
@@ -14,7 +16,9 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-public class Engine {
+import com.google.codes.dryvalidator.dto.FormItem;
+
+public class ValidationEngine {
 	Context ctx;
 	ScriptableObject global;
 	Script getValidatorScript;
@@ -25,21 +29,29 @@ public class Engine {
 			System.out.println(Context.toString(obj));
 		}
 	}
-	public void setUp() {
+	public ValidationEngine setup() {
 		ContextFactory contextFactory = ContextFactory.getGlobal();
 		ctx = contextFactory.enterContext();
 		global = ctx.initStandardObjects();
 		try {
-			loadScript("joose.js");
-			loadScript("dry-validator.js");
+			loadScript("com/google/codes/dryvalidator/joose.js");
+			loadScript("com/google/codes/dryvalidator/dry-validator.js");
 			ScriptableObject.putProperty(global, "console", Context.javaToJS(
 					new Console(), global));
 			ctx.evaluateString(global, "var validators = {};", "<cmd>", 1, null);
 		} catch (IOException e) {
-
+			throw new ResourceNotFoundException(e);
 		}
+		return this;
 	}
 	
+	public Context getContext() {
+		return this.ctx;
+	}
+	
+	public ScriptableObject getGlobalScope() {
+		return this.global;
+	}
 	public void register(FormItem formItem) {
 		Scriptable local = ctx.newObject(global);
 		local.setPrototype(global);
@@ -49,7 +61,17 @@ public class Engine {
 		getValidator().exec(ctx, local);
 	}
 
-	public void exec(String id, String value) {
+	public Map<String, List<String>> exec(Map<String, String> formValues) {
+		Map<String, List<String>> messages = new HashMap<String, List<String>>();
+		for(Map.Entry<String, String> e : formValues.entrySet()) {
+			List<String> messagesByItem = exec(e.getKey(), e.getValue());
+			if(messagesByItem != null && !messagesByItem.isEmpty())
+				messages.put(e.getKey(), messagesByItem);
+		}
+		return messages;
+	}
+
+	public List<String> exec(String id, String value) {
 		Scriptable local = ctx.newObject(global);
 		local.setPrototype(global);
 		local.setParentScope(null);
@@ -67,7 +89,7 @@ public class Engine {
 				messages.add(msg);
 			}
 		}
-		System.out.println(messages);
+		return messages;
 	}
 
 	private Script doValidate() {
@@ -82,7 +104,7 @@ public class Engine {
 			getValidatorScript = ctx.compileString(
 				"var validation = {label: formItem.label};\n"
 				+ "Joose.A.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
-				+ "validators[formItem.id] = DryValidator.CompositeValidator.make(validation);\n"
+				+ "validators[formItem.id] = DRYValidator.CompositeValidator.make(validation);\n"
 				, "<cmd>", 1, null);
 		}
 		return getValidatorScript;
@@ -105,4 +127,9 @@ public class Engine {
 			Context.exit();
 		}
 	}
+
+	public void unregisterAll() {
+		ctx.evaluateString(global, "validators = {};", "<cmd>", 1, null);
+	}
+
 }

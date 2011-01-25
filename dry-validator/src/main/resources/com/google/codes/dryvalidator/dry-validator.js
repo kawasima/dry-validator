@@ -7,8 +7,39 @@ Module(moduleName, function(m) {
 	};
 
 	m.$ = function(id) {
-		return document.getElementById(id);
+		if(m.currentForm != null)
+			return m.currentForm.item(id);
+			
+		return null;
 	}
+	
+	m.currentForm = null;
+	
+	Class("Form", {
+		has: {
+			formItems: { init: {} }
+		},
+		after: {
+			initialize: function() { m.currentForm = this }
+		},
+		methods: {
+			setup: function(form) {
+				var self = this;
+				Joose.O.each(form, function(value, key) {
+					self.formItems[key] = value;
+				});
+				return this;
+			},
+			item: function(id) {
+				return this.formItems[id];
+			},
+			each: function(iter) {
+				for(var i=0; i<this.formItems.length; i++) {
+					iter.apply(this, this.formItems[i]);
+				}
+			}
+		}
+	});
 	
 	Class("CharacterClass");
 	Class("CharacterClass", {
@@ -16,14 +47,43 @@ Module(moduleName, function(m) {
 			name:  { is: "rw" },
 			label: { is: "rw" },
 			regex: { is: "rw" },
-			instances: { is: "ro", persistent: true}
+			instances: { is: "ro", persistent: true},
 		},
 		classMethods: {
+			enable: function(names) {
+				if(arguments.length == 0) {
+					return this.meta.enabled;
+				}
+				this.meta.enabled = [];
+				if(!(names instanceof Array)) {
+					names = [ names ];
+				}
+				for(var i=0; i<names.length; i++) {
+					if(this.instances[names[i]]) {
+						this.meta.enabled.push(names[i]);
+					}
+				}
+			},
 			register: function(name, label, regex){
 				if(!this.instances)
 					this.instances = {};
-				this.instances[name] =
-					new m.CharacterClass({name:name, label:label, regex:regex});
+				
+				if(name.indexOf("+") > 0) {
+					// 合成文字クラス
+					var names = name.split(/\+/);
+					var regexes = [];
+					Joose.A.each(names, function(name) { 
+						var cc = m.CharacterClass.get(name);
+						regexes.push(cc.getRegex());
+					});
+					this.instances[name] = 
+						new m.CharacterClass({name:name, label:label,
+							regex: '('+regexes.join('|')+')'});
+				} else {
+					// 通常の文字クラス
+					this.instances[name] =
+						new m.CharacterClass({name:name, label:label, regex:regex});
+				}
 			},
 			get: function(name) {
 				var cc = this.instances[name];
@@ -46,9 +106,10 @@ Module(moduleName, function(m) {
 	
 	m.CharacterClass.register("Upper", "大文字の英字", "[A-Z]");
 	m.CharacterClass.register("Alpha", "アルファベット", "[A-Za-z]");
-	m.CharacterClass.register("Digit", "数字", "[0-9]");
-	m.CharacterClass.register("Alnum", "英数字", "[A-Za-z0-9]");
+	m.CharacterClass.register("Digit", "半角数字", "[0-9]");
+	m.CharacterClass.register("Alnum", "半角英数字", "[A-Za-z0-9]");
 	m.CharacterClass.register("Punct", "記号", '[!\"#\$%&\'\(\)\*\+,\-\.\/:;<=>\?@\[\\\]\^_\`\{\|\}\~]');
+	m.CharacterClass.register("Alnum+Punct", "半角英数記号");
 
 	Class("Validator", {
 		has: {
@@ -139,11 +200,11 @@ Module(moduleName, function(m) {
 	Class("CompositeValidator", {
 		isa: m.Validator,
 		has: {
-			validators: { is: "rw", init: [] }
+			validators: { is: "rw", init: function() {return [];} }
 		},
 		classMethods: {
 			make: function(obj) {
-				var self = this.meta.instantiate();
+				var self = new m.CompositeValidator();
 				self.label = obj['label'] || '項目';
 				delete(obj.label);
 
@@ -256,4 +317,4 @@ Module(moduleName, function(m) {
 		}
 	});
 });
-})(dryValidatorModuleName || "DryValidator");
+})(dryValidatorModuleName || "DRYValidator");
