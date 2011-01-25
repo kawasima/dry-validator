@@ -25,6 +25,7 @@
  var xml = '<pageItem><label>コメント</label><validations><validation><name>required</name><value>true</value></validation>'
  + '<validation><name>maxLength</name><value>10</value></validation>'
  + '<validation><name>letterType</name><value>Zenkaku</value></validation>'
+ + '<validation><name>function</name><value>if(!DV.$("NAME")) { return ["特別なチェック"]}</value></validation>'
  + '</validations></pageItem>';
 
 var xmlDoc;
@@ -48,7 +49,6 @@ console.log(cv.validate("01234567890")); //NG
 console.log(cv.validate("漢字")); //OK
 console.log(cv.validate("漢字以外ですが半角は入らない")); //NG
 console.log(cv);
-
 -->
   </script>
 </body>

@@ -5,6 +5,10 @@ Module(moduleName, function(m) {
 		var args = arguments;
 		return format.replace(/\{(\d+)\}/g, function(m,c) { return args[parseInt(c)+1]});
 	};
+
+	m.$ = function(id) {
+		return document.getElementById(id);
+	}
 	
 	Class("CharacterClass");
 	Class("CharacterClass", {
@@ -112,6 +116,26 @@ Module(moduleName, function(m) {
 			}
 		}
 	});
+	Class("FunctionValidator", {
+		isa: m.Validator,
+		has: {
+			func: { is:"rw" }
+		},
+		after: {
+		},
+		methods: {
+			setup: function(value) {
+				var value = eval('(function(value){'+ value + '})');
+				if(!value instanceof Function)
+					throw "value must be Function.";
+				this.func = value;
+			},
+			validate: function(value) {
+				return this.func.apply(this, [value]);
+			}
+		}
+	});
+	
 	Class("CompositeValidator", {
 		isa: m.Validator,
 		has: {
@@ -124,7 +148,7 @@ Module(moduleName, function(m) {
 				delete(obj.label);
 
 				for(var key in obj) {
-					var validator;
+					var validator = null;
 					Joose.A.each(m.meta._elements, function(element) {
 						if(element.meta.getName().match('\.'+ Joose.S.uppercaseFirst(key) +'Validator$')) {
 							validator = element.meta.instantiate({label:self.label});
