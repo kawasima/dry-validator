@@ -115,7 +115,7 @@ public class ValidationEngine {
 
 		try {
 			in = new InputStreamReader(Thread.currentThread()
-					.getContextClassLoader().getResourceAsStream(path));
+					.getContextClassLoader().getResourceAsStream(path), "UTF-8");
 			ctx.evaluateReader(global, in, path, 0, null);
 		} finally {
 			IOUtils.closeQuietly(in);
