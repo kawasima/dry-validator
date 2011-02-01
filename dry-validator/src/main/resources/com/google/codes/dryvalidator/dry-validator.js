@@ -130,10 +130,10 @@ Module(moduleName, function(m) {
 		},
 		methods: {
 			setup: function(value){
-				this.required = Boolean.valueOf(value);
+				this.required = (value == true || value == "true");
 			},
 			validate: function(value) {
-				if(!value) {
+				if(this.required && !value) {
 					return [m.format(this.messageFormat, this.label)];
 				}
 			}

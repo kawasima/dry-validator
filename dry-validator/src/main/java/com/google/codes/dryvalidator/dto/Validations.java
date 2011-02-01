@@ -16,5 +16,7 @@ public class Validations implements Serializable {
 		return validations.toArray(new Validation[0]);
 	}
 	
-
+	public void clear() {
+		validations.clear();
+	}
 }
