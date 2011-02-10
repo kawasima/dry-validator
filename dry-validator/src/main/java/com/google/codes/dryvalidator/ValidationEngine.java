@@ -60,9 +60,9 @@ public class ValidationEngine {
 		getValidator().exec(ctx, local);
 	}
 
-	public Map<String, List<String>> exec(Map<String, String> formValues) {
+	public Map<String, List<String>> exec(Map<String, Object> formValues) {
 		Map<String, List<String>> messages = new HashMap<String, List<String>>();
-		for(Map.Entry<String, String> e : formValues.entrySet()) {
+		for(Map.Entry<String, Object> e : formValues.entrySet()) {
 			List<String> messagesByItem = exec(e.getKey(), e.getValue());
 			if(messagesByItem != null && !messagesByItem.isEmpty())
 				messages.put(e.getKey(), messagesByItem);
@@ -70,7 +70,7 @@ public class ValidationEngine {
 		return messages;
 	}
 
-	public List<String> exec(String id, String value) {
+	public List<String> exec(String id, Object value) {
 		Scriptable local = ctx.newObject(global);
 		local.setPrototype(global);
 		local.setParentScope(null);
@@ -78,6 +78,7 @@ public class ValidationEngine {
 				local));
 		ScriptableObject.putProperty(local, "value", Context.javaToJS(value,
 				local));
+
 		Object obj = doValidate().exec(ctx, local);
 
 		List<String> messages = new ArrayList<String>();

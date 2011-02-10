@@ -177,6 +177,59 @@ Module(moduleName, function(m) {
 			}
 		}
 	});
+	
+	Class("SelectionValidator", {
+		isa: m.Validator,
+		has: {
+			min: { is:"rw", init: 0 },
+			max: { is:"rw", init: Number.MAX_VALUE },
+			wittyMessageFormat: { is:"rw" }
+		},
+		after: {
+			initialize: function() {
+				this.messageFormat = null;
+				this.wittyMessageFormat = {
+					min:    "{0}は{1}個以上選択してください。",
+					max:    "{0}は{1}個までしか選択できません。",
+					minmax: "{0}は{1}個以上{2}個以下で選択してください。",
+					min1:   "{0}を選択してください。"
+				}
+			}
+		},
+		methods: {
+			setup: function(value) {
+				var obj = eval("("+value+")");
+				if(obj["min"])
+					this.setMin(obj["min"]);
+				if(obj["max"])
+					this.setMax(obj["max"]);
+			},
+			validate: function(value) {
+				// Valueがundefined,null,空文字の場合は空配列にする
+				// すなわち最小選択数が1以上の場合は空文字でも未選択になるということ
+				if (!(value instanceof Array))
+					value = [value];
+
+				var valueLen = 0;
+				if (value.length > 1 || (value[0]!=null && value[0]!="" && typeof value[0] != "undefined")) {
+					valueLen = value.length;
+				}
+				if(valueLen < this.min || valueLen > this.max) {
+					if(this.messageFormat)
+						return [m.format(this.messageFormat, this.label)];
+
+					if (this.min > 0 && this.max < Number.MAX_VALUE)
+						return [m.format(this.wittyMessageFormat["minmax"], this.label, this.min, this.max)];
+					else if (this.min == 1)
+						return [m.format(this.wittyMessageFormat["min1"], this.label)];
+					else if (this.min > 0)
+						return [m.format(this.wittyMessageFormat["min"], this.label, this.min)];
+					else if (this.max < Number.MAX_VALUE)
+						return [m.format(this.wittyMessageFormat["max"], this.label, this.max)];
+				}
+			}
+		}
+	});
 	Class("FunctionValidator", {
 		isa: m.Validator,
 		has: {

@@ -104,4 +104,26 @@ public class ValidationEngineTest {
 				, "<cmd>", 1, null);
 	}
 	
+	@Test
+	public void selectionの動き() {
+		FormItem formItem = new FormItem();
+		formItem.setId("NAME");
+		formItem.setLabel("氏名");
+		
+    	formItem.getValidations().addValidation(new Validation("Selection", "{min:1}"));
+		validationEngine.register(formItem);
+		// 未入力の場合はチェックしない
+		Assert.assertFalse(validationEngine.exec("NAME", new String[]{""}).isEmpty());
+		Assert.assertTrue(validationEngine.exec("NAME", new String[]{"asdf"}).isEmpty());
+		Assert.assertFalse(validationEngine.exec("NAME", "").isEmpty());
+		Assert.assertTrue(validationEngine.exec("NAME", "hoge").isEmpty());
+		validationEngine.unregisterAll();
+		
+    	formItem.getValidations().addValidation(new Validation("Selection", "{max:2}"));
+		validationEngine.register(formItem);
+		Assert.assertTrue(validationEngine.exec("NAME", "hoge").isEmpty());
+		Assert.assertFalse(validationEngine.exec("NAME", new String[]{"a","b","c"}).isEmpty());
+		validationEngine.unregisterAll();
+	}
 }
+
