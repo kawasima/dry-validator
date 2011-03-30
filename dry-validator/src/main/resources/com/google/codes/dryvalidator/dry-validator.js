@@ -178,6 +178,44 @@ Module(moduleName, function(m) {
 		}
 	});
 	
+	Class("RangeValidator", {
+		isa: m.Validator,
+		has: {
+			min: { is:"rw", init: 0 },
+			max: { is:"rw", init:Number.MAX_VALUE }
+		},
+		after: {
+			initialize: function() {
+				this.messageFormat = null;
+				this.wittyMessageFormat = {
+					min:    "{0}は{1}以上の値でなくてはなりません。",
+					max:    "{0}は{1}以下の値でなくてはないません。",
+				}
+			}
+		},
+		methods: {
+			setup: function(value) {
+				var obj = eval("("+value+")");
+				if(obj["min"])
+					this.setMin(obj["min"]);
+				if(obj["max"])
+					this.setMax(obj["max"]);
+			},
+			validate: function(value) {
+				if(!value)
+					return;
+				if(value < this.min || value > this.max) {
+					if(this.messageFormat)
+						return [m.format(this.messageFormat, this.label)];
+					else if (value < this.min)
+						return [m.format(this.wittyMessageFormat["min"], this.label, this.min)];
+					else if (value > this.max)
+						return [m.format(this.wittyMessageFormat["max"], this.label, this.max)];
+				}
+			}
+		}
+	});
+	
 	Class("SelectionValidator", {
 		isa: m.Validator,
 		has: {

@@ -41,13 +41,16 @@ public class ValidationEngine {
 	public ValidationEngine() {
 	}
 
-	public ValidationEngine setup() {
+	public ValidationEngine setup(String customScriptPath) {
 		ContextFactory contextFactory = ContextFactory.getGlobal();
 		ctx = contextFactory.enterContext();
 		global = ctx.initStandardObjects();
 		try {
 			loadScript("com/google/codes/dryvalidator/joose.js");
 			loadScript("com/google/codes/dryvalidator/dry-validator.js");
+			if (customScriptPath != null)
+				loadScript(customScriptPath);
+			
 			ScriptableObject.putProperty(global, "console", Context.javaToJS(
 					new Console(), global));
 			executeScript("var validators = {};", global);
@@ -55,6 +58,9 @@ public class ValidationEngine {
 			throw new ResourceNotFoundException(e);
 		}
 		return this;
+	}
+	public ValidationEngine setup() {
+		return setup(null);
 	}
 
 	public Context getContext() {

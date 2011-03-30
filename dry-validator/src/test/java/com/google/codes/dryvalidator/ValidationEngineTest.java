@@ -125,5 +125,27 @@ public class ValidationEngineTest {
 		Assert.assertFalse(validationEngine.exec("NAME", new String[]{"a","b","c"}).isEmpty());
 		validationEngine.unregisterAll();
 	}
+	
+	@Test
+	public void 数値の範囲チェック() {
+		FormItem formItem = new FormItem();
+		formItem.setId("FEE");
+		formItem.setLabel("金額");
+		
+    	formItem.getValidations().addValidation(new Validation("Range", "{min:5}"));
+		validationEngine.register(formItem);
+
+		Assert.assertTrue("未入力の場合はチェックしない", validationEngine.exec("FEE", "").isEmpty());
+		Assert.assertFalse("最小5の場合4はNG", validationEngine.exec("FEE", "4").isEmpty());
+		Assert.assertTrue("最小5の場合5はOK", validationEngine.exec("FEE", "5").isEmpty());
+		validationEngine.unregisterAll();
+		
+    	formItem.getValidations().addValidation(new Validation("Range", "{max:5}"));
+		validationEngine.register(formItem);
+		Assert.assertTrue("最大5の場合5はOK", validationEngine.exec("FEE", "5").isEmpty());
+		Assert.assertFalse("最大5の場合6はNG", validationEngine.exec("FEE", "6").isEmpty());
+		validationEngine.unregisterAll();
+		
+	}
 }
 
