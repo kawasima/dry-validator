@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>dry-validator</groupId>
 	<artifactId>dry-validator</artifactId>
-	<version>0.1.2-SNAPSHOT</version>
+	<version>0.1.2</version>
 	<name>dry-validator</name>
 
 	<distributionManagement>
@@ -18,9 +18,9 @@
 	</distributionManagement>
 
 	<scm>
-		<connection>scm:svn:http://dry-validator.googlecode.com/svn/trunk/</connection>
-		<developerConnection>scm:svn:https://dry-validator.googlecode.com/svn/trunk/</developerConnection>
-		<url>scm:svn:http://dry-validator.googlecode.com/svn/trunk/</url>
+		<connection>scm:svn:http://dry-validator.googlecode.com/svn/tags/dry-validator-0.1.2</connection>
+		<developerConnection>scm:svn:https://dry-validator.googlecode.com/svn/tags/dry-validator-0.1.2</developerConnection>
+		<url>scm:svn:http://dry-validator.googlecode.com/svn/tags/dry-validator-0.1.2</url>
 	</scm>
 
 
