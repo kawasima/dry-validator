@@ -9,12 +9,12 @@ Module(moduleName, function(m) {
 	m.$ = function(id) {
 		if(m.currentForm != null)
 			return m.currentForm.item(id);
-			
+
 		return null;
 	}
-	
+
 	m.currentForm = null;
-	
+
 	Class("Form", {
 		has: {
 			formItems: { init: {} }
@@ -40,14 +40,14 @@ Module(moduleName, function(m) {
 			}
 		}
 	});
-	
+
 	Class("CharacterClass");
 	Class("CharacterClass", {
 		has: {
 			name:  { is: "rw" },
 			label: { is: "rw" },
 			regex: { is: "rw" },
-			instances: { is: "ro", persistent: true},
+			instances: { is: "ro", persistent: true}
 		},
 		classMethods: {
 			enable: function(names) {
@@ -67,16 +67,16 @@ Module(moduleName, function(m) {
 			register: function(name, label, regex){
 				if(!this.instances)
 					this.instances = {};
-				
+
 				if(name.indexOf("+") > 0) {
 					// 合成文字クラス
 					var names = name.split(/\+/);
 					var regexes = [];
-					Joose.A.each(names, function(name) { 
+					Joose.A.each(names, function(name) {
 						var cc = m.CharacterClass.get(name);
 						regexes.push(cc.getRegex());
 					});
-					this.instances[name] = 
+					this.instances[name] =
 						new m.CharacterClass({name:name, label:label,
 							regex: '('+regexes.join('|')+')'});
 				} else {
@@ -97,13 +97,13 @@ Module(moduleName, function(m) {
 				return value.match(re);
 			}
 		}
-		
+
 	});
 	m.CharacterClass.register("Katakana", "カタカナ", "[ァ-ヶー]");
 	m.CharacterClass.register("Hiragana", "ひらがな", "[あ-んー]");
 	m.CharacterClass.register("Zenkaku", "全角文字", "[^\u0000-\u007f]")
 	m.CharacterClass.register("Lower", "小文字の英字", "[a-z]");
-	
+
 	m.CharacterClass.register("Upper", "大文字の英字", "[A-Z]");
 	m.CharacterClass.register("Alpha", "アルファベット", "[A-Za-z]");
 	m.CharacterClass.register("Digit", "半角数字", "[0-9]");
@@ -177,7 +177,7 @@ Module(moduleName, function(m) {
 			}
 		}
 	});
-	
+
 	Class("RangeValidator", {
 		isa: m.Validator,
 		has: {
@@ -189,7 +189,7 @@ Module(moduleName, function(m) {
 				this.messageFormat = null;
 				this.wittyMessageFormat = {
 					min:    "{0}は{1}以上の値でなくてはなりません。",
-					max:    "{0}は{1}以下の値でなくてはないません。",
+					max:    "{0}は{1}以下の値でなくてはなりません。"
 				}
 			}
 		},
@@ -215,7 +215,7 @@ Module(moduleName, function(m) {
 			}
 		}
 	});
-	
+
 	Class("SelectionValidator", {
 		isa: m.Validator,
 		has: {
@@ -287,7 +287,7 @@ Module(moduleName, function(m) {
 			}
 		}
 	});
-	
+
 	Class("CompositeValidator", {
 		isa: m.Validator,
 		has: {
@@ -326,7 +326,7 @@ Module(moduleName, function(m) {
 			}
 		}
 	});
-	
+
 	// Copyright 2005-2007 Kawasaki Yusuke <u-suke@kawa.net>
 	Class("DOM", {
 		classMethods: {
@@ -338,10 +338,10 @@ Module(moduleName, function(m) {
 					if(bool == null) return;
 					return elem.nodeValue;
 				}
-				
+
 				var retval;
 				var cnt = {};
-				
+
 				if(elem.attributes && elem.attributes.length) {
 					retval = {};
 					for (var i=0; i<elem.attributes.length; i++) {
@@ -351,10 +351,10 @@ Module(moduleName, function(m) {
 						if(!val) continue;
 						if(typeof(cnt[key]) == "undefined") cnt[key] = 0;
 						cnt[key]++;
-						this.addNode(retval, key, cnt[key], val); 
+						this.addNode(retval, key, cnt[key], val);
 					}
 				}
-				
+
 				if(elem.childNodes && elem.childNodes.length) {
 					var textonly = true;
 					if (retval) textonly = false;
@@ -399,7 +399,7 @@ Module(moduleName, function(m) {
 					}
 				} else if (this.usearray[key]) {
 					if (cnts == 1) hash[key] = [];
-					
+
 					hash[key][hash[key].length] = val;
 				} else {
 					if (cnts == 1) hash[key] = val;

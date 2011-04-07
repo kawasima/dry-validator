@@ -1,61 +1,55 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
 <head>
-	<title></title>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+	<title>DryValidatorのブラウザテスト</title>
 	<script type="text/javascript">var dryValidatorModuleName="DV";</script>
+	<script type="text/javascript" src="jquery.js"></script>
+	<script type="text/javascript" src="../../../src/main/resources/com/google/codes/dryvalidator/joose.js"></script>
+	<script type="text/javascript" src="../../../src/main/resources/com/google/codes/dryvalidator/dry-validator.js"></script>
 </head>
 <body>
-  <form>
-  	<table summary="">
-  		<tbody>
-  			<tr>
-  				<th>氏名</th>
-  				<td>氏<input type="text" id="familyName"/>名<input type="text" id="lastName"/></td>
-  			</tr>
-  			
-  		</tbody>
-  	</table>
-  </form>
-  <script type="text/javascript" src="../../../target/classes/joose.js"></script>
-  <script type="text/javascript" src="../../../target/classes/dry-validator.js"></script>
-  <script type="text/javascript">
-  <!--
- var xml = '<pageItem><label>コメント</label><validations><validation><name>required</name><value>true</value></validation>'
- + '<validation><name>maxLength</name><value>10</value></validation>'
- + '<validation><name>letterType</name><value>Zenkaku</value></validation>'
- + '<validation><name>function</name><value>if(DV.$("NAME")) { return ["特別なチェック"]}</value></validation>'
- + '</validations></pageItem>';
+	<h1>Test</h1>
+	<form>
+		<table>
+			<tr>
+				<th>氏名</th>
+				<td>氏<input type="text" id="familyName"/>名<input type="text" id="firstName"/></td>
+			</tr>
+		</table>
+		<button type="button" id="doValidate">Validate It</button>
+	</form>
+	<script type="text/javascript">
+<!--
+$(document).ready(function() {
+	var xml = '<pageItem><label>コメント</label><validations><validation><name>required</name><value>true</value></validation>'
+		+ '<validation><name>maxLength</name><value>10</value></validation>'
+		+ '<validation><name>letterType</name><value>Zenkaku</value></validation>'
+		+ '<validation><name>function</name><value>if(DV.$("NAME")) { return ["特別なチェック"]}</value></validation>'
+		+ '</validations></pageItem>';
 
-var xmlDoc;
-if(window.DOMParser) {
-	xmlDoc = new DOMParser().parseFromString(xml, 'text/xml');
-} else {
-	xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
-	xmlDoc.async = false;
-	xmlDoc.loadXML(xml);
-}
+	var xmlDoc;
+	if(window.DOMParser) {
+		xmlDoc = new DOMParser().parseFromString(xml, 'text/xml');
+	} else {
+		xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+		xmlDoc.async = false;
+		xmlDoc.loadXML(xml);
+	}
 
-var obj = DV.DOM.parseElement(xmlDoc);
-console.log(obj.pageItem);
-var validation = {label: obj.pageItem.label};
-Joose.A.each(obj.pageItem.validations.validation, function(v) { validation[v.name] = v.value; });
-var cv = DV.CompositeValidator.make(validation);
-var form = new DV.Form().setup({
-	NAME: 'こんにちは',
-	EMAIL: 'aiueo@kakiku.co.jp',
-	EMAIL_CONFIRM: 'aiueo'
+	var obj = DV.DOM.parseElement(xmlDoc);
+	var validation = {label: obj.pageItem.label};
+	Joose.A.each(obj.pageItem.validations.validation, function(v) { validation[v.name] = v.value; });
+	var cv = DV.CompositeValidator.make(validation);
+
+	$("#doValidate").click(function(){
+		var form = new DV.Form().setup({
+			familyName: $("#familyName").val()
+		});
+		form.each(function(item) { alert(item); alert(cv.validate(item)); });
+	});
 });
-form.each(function(item) { cv.validate(item); });
-
-console.log(cv.validate());
-console.log(cv.validate("")); //NG
-console.log(cv.validate("abc")); //NG
-console.log(cv.validate("01234567890")); //NG
-console.log(cv.validate("漢字")); //OK
-console.log(cv.validate("漢字以外ですが半角は入らない")); //NG
-console.log(cv);
--->
-  </script>
+--></script>
 </body>
 </html>
