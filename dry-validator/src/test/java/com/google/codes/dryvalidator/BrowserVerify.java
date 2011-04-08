@@ -10,7 +10,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.ie.InternetExplorerDriver;
 
-public class BrowserTest {
+public class BrowserVerify {
 	@BeforeClass
 	public static void ウェブサーバを起動する() throws Exception{
 		Server server = new Server();
