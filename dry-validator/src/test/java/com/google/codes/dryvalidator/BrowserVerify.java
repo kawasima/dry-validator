@@ -1,5 +1,9 @@
 package com.google.codes.dryvalidator;
 
+import java.util.List;
+
+import junit.framework.Assert;
+
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
@@ -30,10 +34,19 @@ public class BrowserVerify {
 	public void ブラウザテスト() {
 		WebDriver driver = new InternetExplorerDriver();
 		driver.get("http://127.0.0.1:8888/src/test/resources/validation.html");
-		driver.findElement(By.id("familyName")).sendKeys("長い文字");
-		driver.findElement(By.id("firstName")).sendKeys("長い文字");
-		WebElement element = driver.findElement(By.id("doValidate"));
-		element.click();
+		driver.findElement(By.name("familyName")).sendKeys("長い文字");
+		driver.findElement(By.name("firstName")).sendKeys("長い文字");
+		driver.findElement(By.id("doValidate")).click();
+		List<WebElement> messages = driver.findElement(By.id("messageArea")).findElements(By.tagName("li"));
+		Assert.assertEquals(1, messages.size());
+		Assert.assertEquals("特別なチェック", messages.get(0).getText());
+
+		driver.findElement(By.name("familyName")).clear();
+		driver.findElement(By.name("familyName")).sendKeys("hahaha");
+		driver.findElement(By.id("doValidate")).click();
+		messages = driver.findElement(By.id("messageArea")).findElements(By.tagName("li"));
+		Assert.assertEquals(2, messages.size());
+		Assert.assertEquals("氏名は全角文字で入力してください。", messages.get(0).getText());
 		driver.quit();
 	}
 }

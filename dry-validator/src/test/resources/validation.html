@@ -11,11 +11,13 @@
 </head>
 <body>
 	<h1>Test</h1>
-	<form>
-		<table>
+	<div id="messageArea">
+	</div>
+	<form id="sampleForm">
+		<table summary="person">
 			<tr>
 				<th>氏名</th>
-				<td>氏<input type="text" id="familyName"/>名<input type="text" id="firstName"/></td>
+				<td>氏<input type="text" name="familyName"/>名<input type="text" name="firstName"/></td>
 			</tr>
 		</table>
 		<button type="button" id="doValidate">Validate It</button>
@@ -23,10 +25,10 @@
 	<script type="text/javascript">
 <!--
 $(document).ready(function() {
-	var xml = '<pageItem><label>コメント</label><validations><validation><name>required</name><value>true</value></validation>'
+	var xml = '<pageItem><id>familyName</id><label>氏名</label><validations><validation><name>required</name><value>true</value></validation>'
 		+ '<validation><name>maxLength</name><value>10</value></validation>'
 		+ '<validation><name>letterType</name><value>Zenkaku</value></validation>'
-		+ '<validation><name>function</name><value>if(DV.$("NAME")) { return ["特別なチェック"]}</value></validation>'
+		+ '<validation><name>function</name><value>if(true) { return ["特別なチェック"]}</value></validation>'
 		+ '</validations></pageItem>';
 
 	var xmlDoc;
@@ -38,16 +40,22 @@ $(document).ready(function() {
 		xmlDoc.loadXML(xml);
 	}
 
+	var validators = {};
 	var obj = DV.DOM.parseElement(xmlDoc);
 	var validation = {label: obj.pageItem.label};
 	Joose.A.each(obj.pageItem.validations.validation, function(v) { validation[v.name] = v.value; });
-	var cv = DV.CompositeValidator.make(validation);
+	validators[obj.pageItem.id] = DV.CompositeValidator.make(validation);
 
 	$("#doValidate").click(function(){
-		var form = new DV.Form().setup({
-			familyName: $("#familyName").val()
-		});
-		form.each(function(item) { alert(item); alert(cv.validate(item)); });
+		var form = new DV.Form().setup("sampleForm");
+		var msg = form.validateAll(validators);
+
+		var ul = $("<ul/>").appendTo($("#messageArea").empty());
+		for(var key in msg) {
+			for (var i=0; i<msg[key].length; i++) {
+				$("<li/>").text(msg[key][i]).appendTo(ul);
+			}
+		}
 	});
 });
 --></script>

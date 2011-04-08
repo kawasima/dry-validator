@@ -6,15 +6,6 @@ Module(moduleName, function(m) {
 		return format.replace(/\{(\d+)\}/g, function(m,c) { return args[parseInt(c)+1]});
 	};
 
-	m.$ = function(id) {
-		if(m.currentForm != null)
-			return m.currentForm.item(id);
-
-		return null;
-	}
-
-	m.currentForm = null;
-
 	Class("Form", {
 		has: {
 			formItems: { init: {} }
@@ -23,20 +14,24 @@ Module(moduleName, function(m) {
 			initialize: function() { m.currentForm = this }
 		},
 		methods: {
-			setup: function(form) {
+			setup: function(formId) {
 				var self = this;
-				Joose.O.each(form, function(value, key) {
-					self.formItems[key] = value;
-				});
+				var form = document.getElementById(formId);
+				var items = form.getElementsByTagName("input");
+				for(var i=0; i<items.length; i++) {
+					var name = items[i].getAttribute("name");
+					this.formItems[name] = items[i].value;
+				}
+
 				return this;
 			},
-			item: function(id) {
-				return this.formItems[id];
-			},
-			each: function(iter) {
-				for(var i=0; i<this.formItems.length; i++) {
-					iter.apply(this, this.formItems[i]);
+			validateAll: function(validators) {
+				var msg = {};
+				for(var name in this.formItems) {
+					if (!validators[name]) continue;
+					msg[name] = validators[name].validate(this.formItems[name]);
 				}
+				return msg;
 			}
 		}
 	});
@@ -277,10 +272,9 @@ Module(moduleName, function(m) {
 		},
 		methods: {
 			setup: function(value) {
-				var value = eval('(function(value){'+ value + '})');
-				if(!value instanceof Function)
+				eval('this.func = function(value){'+ value + '}');
+				if(!this.func instanceof Function)
 					throw "value must be Function.";
-				this.func = value;
 			},
 			validate: function(value) {
 				return this.func.apply(this, [value]);
