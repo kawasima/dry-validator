@@ -71,6 +71,19 @@ public class ValidationEngine {
 		return this.global;
 	}
 
+	public void register() {
+		Scriptable local = ctx.newObject(global);
+		local.setPrototype(global);
+		local.setParentScope(null);
+		Object wrappedValidation = Context.javaToJS("String", local);
+		ScriptableObject.putProperty(local, "formItem", wrappedValidation);
+		executeScript(
+				"var validation = {label: formItem.label};\n"
+						+ "Joose.A.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
+						+ "validators[formItem.id] = DRYValidator.CompositeValidator.make(validation);\n",
+				local);
+	}
+	
 	public void register(FormItem formItem) {
 		Scriptable local = ctx.newObject(global);
 		local.setPrototype(global);

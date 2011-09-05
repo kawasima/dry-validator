@@ -272,7 +272,11 @@ Module(moduleName, function(m) {
 		},
 		methods: {
 			setup: function(value) {
-				eval('this.func = function(value){'+ value + '}');
+				if(value instanceof Function) {
+					this.func = value;
+				} else {
+					eval('this.func = function(value){'+ value + '}');
+				}
 				if(!this.func instanceof Function)
 					throw "value must be Function.";
 			},
@@ -317,6 +321,13 @@ Module(moduleName, function(m) {
 						Joose.A.each(result, function(msg) { results.push(msg) });
 				});
 				return results;
+			},
+			stringify: function() {
+				var res = "";
+				Joose.A.each(this.validators, function(validator) {
+					res += validator.toString() + ",";
+				});
+				return res;
 			}
 		}
 	});

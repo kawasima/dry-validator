@@ -1,0 +1,11 @@
+{
+	familyName: {
+		label: "氏名",
+		required: true,
+		maxLength: 10,
+		letterType: "Zenkaku",
+		'function': function() {
+			return ["特別なチェック"];
+		}
+	}
+}

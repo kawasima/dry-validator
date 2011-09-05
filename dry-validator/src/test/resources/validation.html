@@ -3,7 +3,7 @@
 <html>
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	<title>DryValidatorのブラウザテスト</title>
+	<title>Test DryValidator in a browser</title>
 	<script type="text/javascript">var dryValidatorModuleName="DV";</script>
 	<script type="text/javascript" src="jquery.js"></script>
 	<script type="text/javascript" src="../../../src/main/resources/com/google/codes/dryvalidator/joose.js"></script>
@@ -25,26 +25,19 @@
 	<script type="text/javascript">
 <!--
 $(document).ready(function() {
-	var xml = '<pageItem><id>familyName</id><label>氏名</label><validations><validation><name>required</name><value>true</value></validation>'
-		+ '<validation><name>maxLength</name><value>10</value></validation>'
-		+ '<validation><name>letterType</name><value>Zenkaku</value></validation>'
-		+ '<validation><name>function</name><value>if(true) { return ["特別なチェック"]}</value></validation>'
-		+ '</validations></pageItem>';
-
-	var xmlDoc;
-	if(window.DOMParser) {
-		xmlDoc = new DOMParser().parseFromString(xml, 'text/xml');
-	} else {
-		xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
-		xmlDoc.async = false;
-		xmlDoc.loadXML(xml);
-	}
-
 	var validators = {};
-	var obj = DV.DOM.parseElement(xmlDoc);
-	var validation = {label: obj.pageItem.label};
-	Joose.A.each(obj.pageItem.validations.validation, function(v) { validation[v.name] = v.value; });
-	validators[obj.pageItem.id] = DV.CompositeValidator.make(validation);
+	$.ajax({
+		url:'validate.json',
+		dataType: 'text',
+		success: function(data) {
+			var obj = eval("("+data+")");
+			for(var key in obj) {
+				validators[key] = DV.CompositeValidator.make(obj[key]);
+			}
+		}, error: function(request, stat, t) {
+			console.error("error:"+stat);
+		}
+	});
 
 	$("#doValidate").click(function(){
 		var form = new DV.Form().setup("sampleForm");
