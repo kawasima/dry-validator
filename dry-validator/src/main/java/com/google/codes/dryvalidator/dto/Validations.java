@@ -11,12 +11,17 @@ public class Validations implements Serializable {
 	public void addValidation(Validation validation) {
 		this.validations.add(validation);
 	}
-	
+
 	public Validation[] getValidation() {
 		return validations.toArray(new Validation[0]);
 	}
-	
+
 	public void clear() {
 		validations.clear();
+	}
+
+	@Override
+	public String toString() {
+		return this.validations.toString();
 	}
 }

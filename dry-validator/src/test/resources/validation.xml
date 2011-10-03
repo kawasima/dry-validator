@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE form-validation PUBLIC
+  "-//Apache Software Foundation//DTD Commons Validator Rules Configuration 1.3.0//EN"
+ "http://commons.apache.org/dtds/validator_1_3_0.dtd">
+<form-validation>
+	<formset>
+		<form name="MemberForm">
+			<field property="familyName" depends="required,maxlength">
+				<arg key="氏名" resource="false"/>
+				<var>
+					<var-name>maxlength</var-name>
+					<var-value>10</var-value>
+				</var>
+			</field>
+			<field property="lastName" depends="required,maxlength">
+				<arg key="氏名" resource="false"/>
+				<var>
+					<var-name>maxlength</var-name>
+					<var-value>10</var-value>
+				</var>
+			</field>
+			<field property="familyNameKana" depends="required,maxlength">
+				<arg key="氏名カナ" resource="false"/>
+				<var>
+					<var-name>maxlength</var-name>
+					<var-value>10</var-value>
+				</var>
+			</field>
+			<field property="lastNameKana" depends="required,maxlength">
+				<arg key="氏名カナ" resource="false"/>
+				<var>
+					<var-name>maxlength</var-name>
+					<var-value>10</var-value>
+				</var>
+			</field>
+			<field property="lastNameKana" depends="required,maxlength">
+				<arg key="氏名カナ" resource="false"/>
+				<var>
+					<var-name>maxlength</var-name>
+					<var-value>10</var-value>
+				</var>
+			</field>
+			<field property="nameRomaji" depends="required,maxlength">
+				<arg key="氏名のローマ字表記" resource="false"/>
+				<var>
+					<var-name>maxlength</var-name>
+					<var-value>10</var-value>
+				</var>
+			</field>
+
+			<field property="childrenNum" depends="required,letterType">
+				<arg key="子供の人数" resource="false"/>
+				<var>
+					<var-name>letterType</var-name>
+					<var-value>Number</var-value>
+				</var>
+			</field>
+
+			<field property="familyNum" depends="required,letterType">
+				<arg key="同居家族の人数" resource="false"/>
+				<var>
+					<var-name>letterType</var-name>
+					<var-value>Number</var-value>
+				</var>
+				<var>
+					<var-name>range</var-name>
+					<var-value>{max: 30}</var-value>
+				</var>
+			</field>
+
+			<field property="dependantNum" depends="required,letterType">
+				<arg key="扶養家族の人数" resource="false"/>
+				<var>
+					<var-name>letterType</var-name>
+					<var-value>Number</var-value>
+				</var>
+				<var>
+					<var-name>range</var-name>
+					<var-value>{max: 30}</var-value>
+				</var>
+			</field>
+
+		</form>
+	</formset>
+</form-validation>
