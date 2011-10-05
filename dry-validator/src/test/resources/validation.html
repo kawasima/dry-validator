@@ -27,13 +27,13 @@
 $(document).ready(function() {
 	var validators = {};
 	$.ajax({
-		url:'validate.json',
-		dataType: 'text',
+		url:'/formItem',
 		success: function(data) {
-			var obj = eval("("+data+")");
-			for(var key in obj) {
-				validators[key] = DV.CompositeValidator.make(obj[key]);
-			}
+			$.each(data, function(i, formItem) {
+				var validation = {label: formItem.label};
+				Joose.A.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });
+				validators[formItem.id] = DV.CompositeValidator.make(validation);
+			});
 		}, error: function(request, stat, t) {
 			console.error("error:"+stat);
 		}

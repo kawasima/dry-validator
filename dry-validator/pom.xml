@@ -24,6 +24,13 @@
 	</scm>
 
 
+	<repositories>
+		<repository>
+			<id>seasar-repository</id>
+			<url>http://maven.seasar.org/maven2/</url>
+		</repository>
+	</repositories>
+
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<outputDirectory>target/classes</outputDirectory>
@@ -86,7 +93,7 @@
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-server</artifactId>
-			<version>7.3.1.v20110307</version>
+			<version>8.0.1.v20110908</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -98,6 +105,12 @@
 			<groupId>commons-digester</groupId>
 			<artifactId>commons-digester</artifactId>
 			<version>1.8</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.arnx.jsonic</groupId>
+			<artifactId>jsonic</artifactId>
+			<version>1.2.0</version>
 		</dependency>
 	</dependencies>
 </project>

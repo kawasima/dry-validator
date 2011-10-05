@@ -12,7 +12,7 @@
 					<var-value>10</var-value>
 				</var>
 			</field>
-			<field property="lastName" depends="required,maxlength">
+			<field property="firstName" depends="required,maxlength">
 				<arg key="氏名" resource="false"/>
 				<var>
 					<var-name>maxlength</var-name>
@@ -52,7 +52,7 @@
 				<arg key="子供の人数" resource="false"/>
 				<var>
 					<var-name>letterType</var-name>
-					<var-value>Number</var-value>
+					<var-value>Digit</var-value>
 				</var>
 			</field>
 
@@ -60,7 +60,7 @@
 				<arg key="同居家族の人数" resource="false"/>
 				<var>
 					<var-name>letterType</var-name>
-					<var-value>Number</var-value>
+					<var-value>Digit</var-value>
 				</var>
 				<var>
 					<var-name>range</var-name>
@@ -72,7 +72,7 @@
 				<arg key="扶養家族の人数" resource="false"/>
 				<var>
 					<var-name>letterType</var-name>
-					<var-value>Number</var-value>
+					<var-value>Digit</var-value>
 				</var>
 				<var>
 					<var-name>range</var-name>
