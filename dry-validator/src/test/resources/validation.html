@@ -19,20 +19,32 @@
 				<th>氏名</th>
 				<td>氏<input type="text" name="familyName"/>名<input type="text" name="firstName"/></td>
 			</tr>
+			<tr>
+				<th>配偶者</th>
+				<td>
+					<input type="checkbox" name="hasSpouse" value="true">あり
+				</td>
+			</tr>
+			<tr>
+				<th>子供の人数</th>
+				<td>
+					<input type="text" name="childrenNum"/>
+				</td>
+			</tr>
 		</table>
 		<button type="button" id="doValidate">Validate It</button>
 	</form>
 	<script type="text/javascript">
 <!--
 $(document).ready(function() {
-	var validators = {};
+	var executor = new DV.Executor();
 	$.ajax({
 		url:'/formItem',
 		success: function(data) {
 			$.each(data, function(i, formItem) {
 				var validation = {label: formItem.label};
 				Joose.A.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });
-				validators[formItem.id] = DV.CompositeValidator.make(validation);
+				executor.addValidator(formItem.id, DV.CompositeValidator.make(validation));
 			});
 		}, error: function(request, stat, t) {
 			console.error("error:"+stat);
@@ -41,7 +53,7 @@ $(document).ready(function() {
 
 	$("#doValidate").click(function(){
 		var form = new DV.Form().setup("sampleForm");
-		var msg = form.validateAll(validators);
+		var msg = executor.execute(form.getFormItems());
 
 		var ul = $("<ul/>").appendTo($("#messageArea").empty());
 		for(var key in msg) {

@@ -5,11 +5,15 @@
 <form-validation>
 	<formset>
 		<form name="MemberForm">
-			<field property="familyName" depends="required,maxlength">
+			<field property="familyName" depends="required,maxlength,letterType">
 				<arg key="氏名" resource="false"/>
 				<var>
 					<var-name>maxlength</var-name>
 					<var-value>10</var-value>
+				</var>
+				<var>
+					<var-name>letterType</var-name>
+					<var-value>Zenkaku</var-value>
 				</var>
 			</field>
 			<field property="firstName" depends="required,maxlength">
@@ -48,38 +52,27 @@
 				</var>
 			</field>
 
-			<field property="childrenNum" depends="required,letterType">
+			<field property="hasSpouse" depends="required">
+				<arg key="配偶者の有無" resource="false"/>
+			</field>
+
+			<field property="childrenNum" depends="letterType,function">
 				<arg key="子供の人数" resource="false"/>
 				<var>
 					<var-name>letterType</var-name>
 					<var-value>Digit</var-value>
 				</var>
-			</field>
-
-			<field property="familyNum" depends="required,letterType">
-				<arg key="同居家族の人数" resource="false"/>
 				<var>
-					<var-name>letterType</var-name>
-					<var-value>Digit</var-value>
-				</var>
-				<var>
-					<var-name>range</var-name>
-					<var-value>{max: 30}</var-value>
+					<var-name>function</var-name>
+					<var-value><![CDATA[
+					console.log("hasSpouse="+this.getValue("hasSpouse"));
+					console.log("value="+value);
+						if(this.getValue("hasSpouse") && !value) {
+							return [m.format("{0}が入力されていません", this.label)];
+						}
+					]]></var-value>
 				</var>
 			</field>
-
-			<field property="dependantNum" depends="required,letterType">
-				<arg key="扶養家族の人数" resource="false"/>
-				<var>
-					<var-name>letterType</var-name>
-					<var-value>Digit</var-value>
-				</var>
-				<var>
-					<var-name>range</var-name>
-					<var-value>{max: 30}</var-value>
-				</var>
-			</field>
-
 		</form>
 	</formset>
 </form-validation>

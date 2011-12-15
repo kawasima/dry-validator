@@ -2,8 +2,12 @@ package com.google.codes.dryvalidator;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+
+import junit.framework.Assert;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.Field;
@@ -30,6 +34,7 @@ public class ValidationFromStruts {
 		validationEngine.dispose();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void test() throws IOException, SAXException {
 		InputStream in = this.getClass().getResourceAsStream("/validation.xml");
@@ -56,8 +61,13 @@ public class ValidationFromStruts {
 			validationEngine.register(formItem);
 		}
 
-		List<String> messages = validationEngine.exec("familyName", "0123456789");
-		System.out.println(messages);
+		Map<String, Object> formValues = new HashMap<String, Object>();
+		formValues.put("hasSpouse", true);
+		formValues.put("familyName", "01234567890");
+		formValues.put("childrenNum", "");
+		Map<String, List<String>> messages = validationEngine.exec(formValues);
+		List<String> childrenNumMessages = messages.get("childrenNum");
+		Assert.assertTrue("配偶者がありのときは、子供の人数が必須になる", childrenNumMessages != null && childrenNumMessages.size() == 1);
 		validationEngine.unregisterAll();
 
 	}

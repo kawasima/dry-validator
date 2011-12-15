@@ -11,7 +11,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import junit.framework.Assert;
-
 import net.arnx.jsonic.JSON;
 
 import org.apache.commons.io.IOUtils;
@@ -32,7 +31,6 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.ie.InternetExplorerDriver;
-import org.xml.sax.SAXException;
 
 import com.google.codes.dryvalidator.dto.FormItem;
 import com.google.codes.dryvalidator.dto.Validation;
@@ -40,6 +38,7 @@ import com.google.codes.dryvalidator.dto.Validation;
 public class BrowserVerify {
 
 	public static class FormItemHandler extends AbstractHandler {
+		@SuppressWarnings("unchecked")
 		private List<FormItem> getFormItem(String formName) {
 			InputStream in = this.getClass().getResourceAsStream(
 					"/validation.xml");
@@ -113,21 +112,29 @@ public class BrowserVerify {
 	public void ブラウザテスト() {
 		WebDriver driver = new InternetExplorerDriver();
 		driver.get("http://127.0.0.1:8888/src/test/resources/validation.html");
-		driver.findElement(By.name("familyName")).sendKeys("長い文字");
+		driver.findElement(By.name("familyName")).sendKeys("長い文字ながーーーーい文字");
 		driver.findElement(By.name("firstName")).sendKeys("長い文字");
 		driver.findElement(By.id("doValidate")).click();
 		List<WebElement> messages = driver.findElement(By.id("messageArea"))
 				.findElements(By.tagName("li"));
 		Assert.assertEquals(1, messages.size());
-		Assert.assertEquals("特別なチェック", messages.get(0).getText());
+		Assert.assertEquals("氏名は10文字以内で入力してください。", messages.get(0).getText());
 
 		driver.findElement(By.name("familyName")).clear();
 		driver.findElement(By.name("familyName")).sendKeys("hahaha");
 		driver.findElement(By.id("doValidate")).click();
 		messages = driver.findElement(By.id("messageArea")).findElements(
 				By.tagName("li"));
-		Assert.assertEquals(2, messages.size());
+		Assert.assertEquals(1, messages.size());
 		Assert.assertEquals("氏名は全角文字で入力してください。", messages.get(0).getText());
+
+		driver.findElement(By.name("hasSpouse")).click();
+		driver.findElement(By.id("doValidate")).click();
+		messages = driver.findElement(By.id("messageArea")).findElements(
+				By.tagName("li"));
+		Assert.assertEquals(2, messages.size());
+
+
 		driver.quit();
 	}
 

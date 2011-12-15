@@ -8,7 +8,7 @@ Module(moduleName, function(m) {
 
 	Class("Form", {
 		has: {
-			formItems: { init: {} }
+			formItems: { is: "rw", init: {} }
 		},
 		after: {
 			initialize: function() { m.currentForm = this }
@@ -16,22 +16,24 @@ Module(moduleName, function(m) {
 		methods: {
 			setup: function(formId) {
 				var self = this;
+				this.formItems = {};
 				var form = document.getElementById(formId);
 				var items = form.getElementsByTagName("input");
 				for(var i=0; i<items.length; i++) {
 					var name = items[i].getAttribute("name");
-					this.formItems[name] = items[i].value;
+					if (items[i].getAttribute("type") == "checkbox" || items[i].getAttribute("type") == "radio") {
+						if (items[i].checked) {
+							var val = items[i].value;
+							val = val == "true" ? true : val;
+							this.formItems[name] = val;
+						}
+
+					} else {
+						this.formItems[name] = items[i].value;
+					}
 				}
 
 				return this;
-			},
-			validateAll: function(validators) {
-				var msg = {};
-				for(var name in this.formItems) {
-					if (!validators[name]) continue;
-					msg[name] = validators[name].validate(this.formItems[name]);
-				}
-				return msg;
 			}
 		}
 	});
@@ -109,10 +111,39 @@ Module(moduleName, function(m) {
 	Class("Validator", {
 		has: {
 			label: { is: "rw" },
-			messageFormat: { is:"rw" }
+			messageFormat: { is:"rw" },
+			context: { is: "rw" }
 		},
 		methods: {
-			validate: Joose.emptyFunction
+			validate: Joose.emptyFunction,
+			getValue: function(id) {
+				return this.context[id];
+			}
+		}
+	});
+
+	Class("Executor", {
+		has: {
+			validators: { is: "ro", init: function() { return {} } }
+		},
+		methods: {
+			addValidator: function(id, validator) {
+				this.validators[id] = validator;
+			},
+			execute: function(form) {
+				var self = this;
+				var messages = {};
+				Joose.O.each(form, function(value, id) {
+					var validator = self.validators[id];
+					console.log("("+validator+")" + id+":"+value);
+
+					if (validator) {
+						validator.setContext(form);
+						messages[id] = validator.validate(value);
+					}
+				});
+				return messages;
+			}
 		}
 	});
 	Class("RequiredValidator", {
@@ -314,8 +345,10 @@ Module(moduleName, function(m) {
 		},
 		methods: {
 			validate: function(value) {
+				var self = this;
 				var results = [];
 				Joose.A.each(this.validators, function(validator) {
+					validator.setContext(self.getContext());
 					var result = validator.validate(value);
 					if (result)
 						Joose.A.each(result, function(msg) { results.push(msg) });

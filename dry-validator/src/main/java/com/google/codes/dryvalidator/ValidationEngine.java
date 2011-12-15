@@ -14,6 +14,7 @@ import org.apache.commons.io.IOUtils;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -50,10 +51,10 @@ public class ValidationEngine {
 			loadScript("com/google/codes/dryvalidator/dry-validator.js");
 			if (customScriptPath != null)
 				loadScript(customScriptPath);
-			
+
 			ScriptableObject.putProperty(global, "console", Context.javaToJS(
 					new Console(), global));
-			executeScript("var validators = {};", global);
+			executeScript("var executor = new DRYValidator.Executor();", global);
 		} catch (IOException e) {
 			throw new ResourceNotFoundException(e);
 		}
@@ -80,10 +81,10 @@ public class ValidationEngine {
 		executeScript(
 				"var validation = {label: formItem.label};\n"
 						+ "Joose.A.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
-						+ "validators[formItem.id] = DRYValidator.CompositeValidator.make(validation);\n",
+						+ "executor.addValidator(formItem.id, DRYValidator.CompositeValidator.make(validation));\n",
 				local);
 	}
-	
+
 	public void register(FormItem formItem) {
 		Scriptable local = ctx.newObject(global);
 		local.setPrototype(global);
@@ -93,17 +94,37 @@ public class ValidationEngine {
 		executeScript(
 				"var validation = {label: formItem.label};\n"
 						+ "Joose.A.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
-						+ "validators[formItem.id] = DRYValidator.CompositeValidator.make(validation);\n",
+						+ "executor.addValidator(formItem.id, DRYValidator.CompositeValidator.make(validation));\n",
 				local);
 	}
 
 	public Map<String, List<String>> exec(Map<String, Object> formValues) {
-		Map<String, List<String>> messages = new HashMap<String, List<String>>();
-		for (Map.Entry<String, Object> e : formValues.entrySet()) {
-			List<String> messagesByItem = exec(e.getKey(), e.getValue());
-			if (messagesByItem != null && !messagesByItem.isEmpty())
-				messages.put(e.getKey(), messagesByItem);
+		Scriptable local = ctx.newObject(global);
+		local.setPrototype(global);
+		local.setParentScope(null);
+		NativeObject formValuesObj = new NativeObject();
+		for(Map.Entry<String, Object> entry : formValues.entrySet()) {
+			formValuesObj.defineProperty(entry.getKey(), entry.getValue(), NativeObject.READONLY);
 		}
+		ScriptableObject.putProperty(local, "values", formValuesObj);
+		Object obj = executeScript("executor.execute(values)", local);
+
+		Map<String, List<String>> messages = new HashMap<String, List<String>>();
+		if (obj instanceof NativeObject) {
+			NativeObject nobj = NativeObject.class.cast(obj);
+			for (Map.Entry<String, Object> e : formValues.entrySet()) {
+				Object valuesObj = NativeObject.getProperty(nobj, e.getKey());
+				if (valuesObj instanceof NativeArray) {
+					NativeArray values = NativeArray.class.cast(valuesObj);
+					List<String> thisMessages = new ArrayList<String>();
+					for (int i = 0; i < values.getLength(); i++) {
+						thisMessages.add(Context.toString(values.get(i, local)));
+					}
+					messages.put(e.getKey(), thisMessages);
+				}
+			}
+		}
+
 		return messages;
 	}
 
