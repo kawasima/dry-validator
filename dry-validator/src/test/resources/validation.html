@@ -32,7 +32,7 @@
 				</td>
 			</tr>
 		</table>
-		<button type="button" id="doValidate">Validate It</button>
+		<input type="submit" id="doValidate" name="doValidate" value="Validate It"/>
 	</form>
 	<script type="text/javascript">
 <!--
@@ -61,6 +61,7 @@ $(document).ready(function() {
 				$("<li/>").text(msg[key][i]).appendTo(ul);
 			}
 		}
+		return false;
 	});
 });
 --></script>

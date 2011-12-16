@@ -65,8 +65,6 @@
 				<var>
 					<var-name>function</var-name>
 					<var-value><![CDATA[
-					console.log("hasSpouse="+this.getValue("hasSpouse"));
-					console.log("value="+value);
 						if(this.getValue("hasSpouse") && !value) {
 							return [m.format("{0}が入力されていません", this.label)];
 						}

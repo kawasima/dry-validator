@@ -135,7 +135,6 @@ Module(moduleName, function(m) {
 				var messages = {};
 				Joose.O.each(form, function(value, id) {
 					var validator = self.validators[id];
-					console.log("("+validator+")" + id+":"+value);
 
 					if (validator) {
 						validator.setContext(form);
