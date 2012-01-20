@@ -330,7 +330,7 @@ Module(moduleName, function(m) {
 				for(var key in obj) {
 					var validator = null;
 					Joose.A.each(m.meta._elements, function(element) {
-						if(element.meta.getName().match('\.'+ Joose.S.uppercaseFirst(key) +'Validator$')) {
+						if(element.meta.getName().match('\\.'+ Joose.S.uppercaseFirst(key) +'Validator$')) {
 							validator = element.meta.instantiate({label:self.label});
 						}
 					});
