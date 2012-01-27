@@ -22,35 +22,39 @@ Module(moduleName, function(m) {
 				Joose.A.concat(items, Array.prototype.slice.apply(form.getElementsByTagName("input")));
 				Joose.A.concat(items, Array.prototype.slice.apply(form.getElementsByTagName("textarea")));
 				Joose.A.each(items, function(item) {
-					var name = items[i].getAttribute("name");
-					if (!this.formItems[name])
-						this.formItems[name] = null;
+					var name = item.getAttribute("name");
+					if (!self.formItems[name])
+						self.formItems[name] = null;
 
-					if (items[i].getAttribute("type") == "radio" && items[i].checked) {
-						var val = items[i].value;
-						val = val == "true" ? true : val;
-						this.formItems[name] = val;
-					} else if (items[i].getAttribute("type") && items[i].checked) {
-						var val = items[i].value;
-						val = val == "true" ? true : val;
-						if (!this.formItems[name])
-							this.formItems[name] = [];
-						this.formItems[name].push(val);
+					if (item.getAttribute("type") == "radio") {
+						if (item.checked) {
+							var val = item.value;
+							val = val == "true" ? true : val;
+							self.formItems[name] = val;
+						}
+					} else if (item.getAttribute("type") =="checkbox") {
+						if (item.checked) {
+							var val = item.value;
+							val = val == "true" ? true : val;
+							if (!self.formItems[name])
+								self.formItems[name] = [];
+							self.formItems[name].push(val);
+						}
 					} else {
-						this.formItems[name] = items[i].value;
+						self.formItems[name] = item.value;
 					}
 				});
 
-				Joose.O.each(form.getElementsByTagName("select"), function(item) {
+				Joose.A.each(form.getElementsByTagName("select"), function(item) {
 					var name = item.getAttribute("name");
 					var options = item.getElementsByTagName("option");
 					var values = [];
-					Joose.O.each(options, function(option) {
+					Joose.A.each(options, function(option) {
 						if (option.selected) {
 							values.push(option.value);
 						}
 					});
-					this.formItems[name] = (values.length > 0) ? values : null;
+					self.formItems[name] = (values.length > 0) ? values : null;
 				});
 
 				return this;

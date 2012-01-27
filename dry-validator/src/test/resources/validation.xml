@@ -71,6 +71,23 @@
 					]]></var-value>
 				</var>
 			</field>
+
+			<field property="prefectureCd" depends="selection">
+				<arg key="都道府県" resource="false"/>
+				<var>
+					<var-name>selection</var-name>
+					<var-value>{min:1}</var-value>
+				</var>
+			</field>
+
+			<field property="genderCd" depends="selection">
+				<arg key="性別" resource="false"/>
+				<var>
+					<var-name>selection</var-name>
+					<var-value>{min:1}</var-value>
+				</var>
+			</field>
+
 		</form>
 	</formset>
 </form-validation>

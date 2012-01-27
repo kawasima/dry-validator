@@ -31,6 +31,27 @@
 					<input type="text" name="childrenNum"/>
 				</td>
 			</tr>
+			<tr>
+				<th>都道府県</th>
+				<td>
+					<select name="prefectureCd">
+						<option value="">選択して下さい</option>
+						<option value="01">北海道</option>
+						<option value="02">青森</option>
+						<option value="03">秋田</option>
+						<option value="04">岩手</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<th>性別</th>
+				<td>
+					<input type="radio" id="genderCd_M" name="genderCd" value="M"/>
+					<label for="genderCd_M">男性</label>
+					<input type="radio" id="genderCd_F" name="genderCd" value="F"/>
+					<label for="genderCd_F">女性</label>
+				</td>
+			</tr>
 		</table>
 		<input type="submit" id="doValidate" name="doValidate" value="Validate It"/>
 	</form>
