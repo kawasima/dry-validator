@@ -136,7 +136,7 @@ public class ValidationEngine {
 		ScriptableObject.putProperty(local, "value", Context.javaToJS(value,
 				local));
 
-		Object obj = executeScript("validators[id].validate(value);", local);
+		Object obj = executeScript("executor.validators[id].validate(value);", local);
 
 		List<String> messages = new ArrayList<String>();
 		if (obj instanceof NativeArray) {
@@ -184,7 +184,7 @@ public class ValidationEngine {
 	}
 
 	public void unregisterAll() {
-		ctx.evaluateString(global, "validators = {};", "<cmd>", 1, null);
+		ctx.evaluateString(global, "executor.validators = {};", "<cmd>", 1, null);
 	}
 
 	private String digest(String input) {

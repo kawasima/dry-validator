@@ -18,20 +18,40 @@ Module(moduleName, function(m) {
 				var self = this;
 				this.formItems = {};
 				var form = document.getElementById(formId);
-				var items = form.getElementsByTagName("input");
-				for(var i=0; i<items.length; i++) {
+				var items = [];
+				Joose.A.concat(items, Array.prototype.slice.apply(form.getElementsByTagName("input")));
+				Joose.A.concat(items, Array.prototype.slice.apply(form.getElementsByTagName("textarea")));
+				Joose.A.each(items, function(item) {
 					var name = items[i].getAttribute("name");
-					if (items[i].getAttribute("type") == "checkbox" || items[i].getAttribute("type") == "radio") {
-						if (items[i].checked) {
-							var val = items[i].value;
-							val = val == "true" ? true : val;
-							this.formItems[name] = val;
-						}
+					if (!this.formItems[name])
+						this.formItems[name] = null;
 
+					if (items[i].getAttribute("type") == "radio" && items[i].checked) {
+						var val = items[i].value;
+						val = val == "true" ? true : val;
+						this.formItems[name] = val;
+					} else if (items[i].getAttribute("type") && items[i].checked) {
+						var val = items[i].value;
+						val = val == "true" ? true : val;
+						if (!this.formItems[name])
+							this.formItems[name] = [];
+						this.formItems[name].push(val);
 					} else {
 						this.formItems[name] = items[i].value;
 					}
-				}
+				});
+
+				Joose.O.each(form.getElementsByTagName("select"), function(item) {
+					var name = item.getAttribute("name");
+					var options = item.getElementsByTagName("option");
+					var values = [];
+					Joose.O.each(options, function(option) {
+						if (option.selected) {
+							values.push(option.value);
+						}
+					});
+					this.formItems[name] = (values.length > 0) ? values : null;
+				});
 
 				return this;
 			}
@@ -135,6 +155,13 @@ Module(moduleName, function(m) {
 				var messages = {};
 				Joose.O.each(form, function(value, id) {
 					var validator = self.validators[id];
+					if (!validator) {
+						Joose.O.each(self.validators, function(v, vid) {
+							var re = new RegExp("^"+vid);
+							if (re.exec(id))
+								validator = v;
+						});
+					}
 
 					if (validator) {
 						validator.setContext(form);
