@@ -6,6 +6,33 @@ Module(moduleName, function(m) {
 		return format.replace(/\{(\d+)\}/g, function(m,c) { return args[parseInt(c)+1]});
 	};
 
+	var setupFormItems = function(nodeList) {
+		var self = this;
+		Joose.A.each(nodeList, function(item) {
+			var name = item.getAttribute("name");
+			if (!self.formItems[name])
+				self.formItems[name] = null;
+
+			if (item.getAttribute("type") == "radio") {
+				if (item.checked) {
+					var val = item.value;
+					val = val == "true" ? true : val;
+					self.formItems[name] = val;
+				}
+			} else if (item.getAttribute("type") =="checkbox") {
+				if (item.checked) {
+					var val = item.value;
+					val = val == "true" ? true : val;
+					if (!self.formItems[name])
+						self.formItems[name] = [];
+					self.formItems[name].push(val);
+				}
+			} else {
+				self.formItems[name] = item.value;
+			}
+		});
+	};
+
 	Class("Form", {
 		has: {
 			formItems: { is: "rw", init: {} }
@@ -18,32 +45,8 @@ Module(moduleName, function(m) {
 				var self = this;
 				this.formItems = {};
 				var form = document.getElementById(formId);
-				var items = [];
-				Joose.A.concat(items, Array.prototype.slice.apply(form.getElementsByTagName("input")));
-				Joose.A.concat(items, Array.prototype.slice.apply(form.getElementsByTagName("textarea")));
-				Joose.A.each(items, function(item) {
-					var name = item.getAttribute("name");
-					if (!self.formItems[name])
-						self.formItems[name] = null;
-
-					if (item.getAttribute("type") == "radio") {
-						if (item.checked) {
-							var val = item.value;
-							val = val == "true" ? true : val;
-							self.formItems[name] = val;
-						}
-					} else if (item.getAttribute("type") =="checkbox") {
-						if (item.checked) {
-							var val = item.value;
-							val = val == "true" ? true : val;
-							if (!self.formItems[name])
-								self.formItems[name] = [];
-							self.formItems[name].push(val);
-						}
-					} else {
-						self.formItems[name] = item.value;
-					}
-				});
+				setupFormItems.apply(this, [form.getElementsByTagName("input")]);
+				setupFormItems.apply(this, [form.getElementsByTagName("textarea")]);
 
 				Joose.A.each(form.getElementsByTagName("select"), function(item) {
 					var name = item.getAttribute("name");

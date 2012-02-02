@@ -75,7 +75,6 @@ public class BrowserVerify {
 			return formItemList;
 		}
 
-		@Override
 		public void handle(String target, Request baseRequest,
 				HttpServletRequest request, HttpServletResponse response)
 				throws IOException, ServletException {
@@ -117,7 +116,7 @@ public class BrowserVerify {
 		driver.findElement(By.id("doValidate")).click();
 		List<WebElement> messages = driver.findElement(By.id("messageArea"))
 				.findElements(By.tagName("li"));
-		Assert.assertEquals(1, messages.size());
+		Assert.assertEquals(4, messages.size());
 		Assert.assertEquals("氏名は10文字以内で入力してください。", messages.get(0).getText());
 
 		driver.findElement(By.name("familyName")).clear();
@@ -125,14 +124,14 @@ public class BrowserVerify {
 		driver.findElement(By.id("doValidate")).click();
 		messages = driver.findElement(By.id("messageArea")).findElements(
 				By.tagName("li"));
-		Assert.assertEquals(1, messages.size());
+		Assert.assertEquals(4, messages.size());
 		Assert.assertEquals("氏名は全角文字で入力してください。", messages.get(0).getText());
 
 		driver.findElement(By.name("hasSpouse")).click();
 		driver.findElement(By.id("doValidate")).click();
 		messages = driver.findElement(By.id("messageArea")).findElements(
 				By.tagName("li"));
-		Assert.assertEquals(2, messages.size());
+		Assert.assertEquals(3, messages.size());
 
 
 		driver.quit();
