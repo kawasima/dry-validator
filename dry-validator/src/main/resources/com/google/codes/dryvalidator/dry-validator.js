@@ -185,7 +185,7 @@ Module(moduleName, function(m) {
 			required: { is: "rw", init: true }
 		},
 		after: {
-			initialize: function() { this.messageFormat = "{0}は必須です"; }
+			initialize: function() { this.messageFormat = "{0}は必須です。"; }
 		},
 		methods: {
 			setup: function(value){
@@ -308,7 +308,7 @@ Module(moduleName, function(m) {
 					value = [value];
 
 				var valueLen = 0;
-				if (value.length > 1 || (value[0]!=null && value[0]!="" && typeof value[0] != "undefined")) {
+				if (value.length > 1 && !(value[0]==null || new String(value[0]) == "" || typeof(value[0]) == "undefined")) {
 					valueLen = value.length;
 				}
 				if(valueLen < this.min || valueLen > this.max) {
