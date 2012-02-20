@@ -87,7 +87,13 @@
 					<var-value>{min:1}</var-value>
 				</var>
 			</field>
-
+			<field property="family\[\d+\].name" depends="letterType">
+				<arg key="家族氏名" resource="false"/>
+				<var>
+					<var-name>letterType</var-name>
+					<var-value>Alpha</var-value>
+				</var>
+			</field>
 		</form>
 	</formset>
 </form-validation>

@@ -46,12 +46,22 @@
 			<tr>
 				<th>性別</th>
 				<td>
-					<input type="radio" id="genderCd_M" name="genderCd" value="M"/>
+					<input type="radio" id="genderCd_M" name="genderCd" value="true"/>
 					<label for="genderCd_M">男性</label>
-					<input type="radio" id="genderCd_F" name="genderCd" value="F"/>
+					<input type="radio" id="genderCd_F" name="genderCd" value="false"/>
 					<label for="genderCd_F">女性</label>
 				</td>
 			</tr>
+
+			<tr>
+				<th>家族氏名</th>
+				<td>
+					<ul>
+						<li>1人目<input type="text" name="family[0].name"/></li>
+						<li>2人目<input type="text" name="family[1].name"/></li>
+						<li>3人目<input type="text" name="family[2].name"/></li>
+					</ul>
+				</td>
 		</table>
 		<input type="submit" id="doValidate" name="doValidate" value="Validate It"/>
 	</form>

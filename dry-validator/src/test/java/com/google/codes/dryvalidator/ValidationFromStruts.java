@@ -65,6 +65,7 @@ public class ValidationFromStruts {
 		formValues.put("hasSpouse", true);
 		formValues.put("familyName", "01234567890");
 		formValues.put("childrenNum", "");
+		formValues.put("genderCd", false);
 		Map<String, List<String>> messages = validationEngine.exec(formValues);
 		List<String> childrenNumMessages = messages.get("childrenNum");
 		Assert.assertTrue("配偶者がありのときは、子供の人数が必須になる", childrenNumMessages != null && childrenNumMessages.size() == 1);

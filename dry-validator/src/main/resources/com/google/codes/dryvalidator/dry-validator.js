@@ -164,7 +164,7 @@ Module(moduleName, function(m) {
 					var validator = self.validators[id];
 					if (!validator) {
 						Joose.O.each(self.validators, function(v, vid) {
-							var re = new RegExp("^"+vid);
+							var re = new RegExp("^"+vid+"$");
 							if (re.exec(id))
 								validator = v;
 						});
@@ -192,7 +192,7 @@ Module(moduleName, function(m) {
 				this.required = (value == true || value == "true");
 			},
 			validate: function(value) {
-				if(this.required && !value) {
+				if(this.required && (value == null || String(value) == "" || typeof(value) == "undefined")) {
 					return [m.format(this.messageFormat, this.label)];
 				}
 			}
@@ -308,7 +308,7 @@ Module(moduleName, function(m) {
 					value = [value];
 
 				var valueLen = 0;
-				if (value.length > 1 || !(value[0]==null || new String(value[0]) == "" || typeof(value[0]) == "undefined")) {
+				if (value.length > 1 || !(value[0]==null || String(value[0]) == "" || typeof(value[0]) == "undefined")) {
 					valueLen = value.length;
 				}
 				if(valueLen < this.min || valueLen > this.max) {
