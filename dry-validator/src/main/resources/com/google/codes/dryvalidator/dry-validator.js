@@ -6,33 +6,6 @@ Module(moduleName, function(m) {
 		return format.replace(/\{(\d+)\}/g, function(m,c) { return args[parseInt(c)+1]});
 	};
 
-	var setupFormItems = function(nodeList) {
-		var self = this;
-		Joose.A.each(nodeList, function(item) {
-			var name = item.getAttribute("name");
-			if (!self.formItems[name])
-				self.formItems[name] = null;
-
-			if (item.getAttribute("type") == "radio") {
-				if (item.checked) {
-					var val = item.value;
-					val = val == "true" ? true : val;
-					self.formItems[name] = val;
-				}
-			} else if (item.getAttribute("type") =="checkbox") {
-				if (item.checked) {
-					var val = item.value;
-					val = val == "true" ? true : val;
-					if (!self.formItems[name])
-						self.formItems[name] = [];
-					self.formItems[name].push(val);
-				}
-			} else {
-				self.formItems[name] = item.value;
-			}
-		});
-	};
-
 	Class("Form", {
 		has: {
 			formItems: { is: "rw", init: {} }
@@ -41,23 +14,63 @@ Module(moduleName, function(m) {
 			initialize: function() { m.currentForm = this }
 		},
 		methods: {
-			setup: function(formId) {
-				var self = this;
-				this.formItems = {};
-				var form = document.getElementById(formId);
-				setupFormItems.apply(this, [form.getElementsByTagName("input")]);
-				setupFormItems.apply(this, [form.getElementsByTagName("textarea")]);
+			_isFormItem: function (el) {
+				if (!el || !el.name || !el.getAttribute("name")) return false;
+				return (item.name == "input" || item.name == "INPUT")
+						&& (item.name == "textarea" || item.name == "TEXTAREA")
+						&& (item.name == "select" || item.name == "SELECT");
+			},
+			_putValue: function (name, value) {
+				var ctx = this.formItems;
+				var names = name.split(/¥./);
+				var propName = names.pop();
+				Joose.A.each(names, function (n) {
+					// for Nested properties (e.g. foo[0].bar[1].name)
+					if (n.match(/^(.+)¥[(¥d+)¥]$/)) {
+						n = RegExp.$1;
+						var idx = RegExp.$2;
+						if (!ctx[n])
+							ctx[n] = new Array();
+						for (var i=ctx[n].length; i <= idx; i++)
+							ctx[n].push({});
+						ctx = ctx[n][idx];
+					} else {
+						ctx = ctx[n];
+					}
+				});
+				if (ctx[propName] != undefined && !(ctx[propName] instanceof Array))
+					ctx[propName] = [ctx[propName]];
 
-				Joose.A.each(form.getElementsByTagName("select"), function(item) {
-					var name = item.getAttribute("name");
-					var options = item.getElementsByTagName("option");
+				ctx[propName] = value;
+			},
+			_getValue: function (node) {
+				if (node.getAttribute("type") == "radio" || node.getAttribute("type") == "checkbox") {
+					if (node.checked) {
+						var val = node.value;
+						return val == "true" ? true : val;
+					}
+				} else if (node.name == "select" || node.name == "SELECT"){
+					var name = node.getAttribute("name");
+					var options = node.getElementsByTagName("option");
 					var values = [];
 					Joose.A.each(options, function(option) {
 						if (option.selected) {
 							values.push(option.value);
 						}
 					});
-					self.formItems[name] = (values.length > 0) ? values : null;
+					return (values.length > 0) ? values : null;
+				} else {
+					return item.value;
+				}
+			},
+			setup: function(formId) {
+				var self = this;
+				this.formItems = {};
+				var form = document.getElementById(formId);
+				Joose.A.each(form.getElementsByTagName("*"), function(item) {
+					if (this._isFormItem(item)){
+						this._putValue(item.getAttribute("name"), this._getValue(item));
+					}
 				});
 
 				return this;
@@ -154,26 +167,43 @@ Module(moduleName, function(m) {
 			validators: { is: "ro", init: function() { return {} } }
 		},
 		methods: {
-			addValidator: function(id, validator) {
+			addValidator: function (id, validator) {
 				this.validators[id] = validator;
 			},
-			execute: function(form) {
+			_findValidator: function (id) {
+				var validator = this.validators[id];
+				if (!validator) {
+					Joose.O.each(self.validators, function(v, vid) {
+						var re = new RegExp("^"+vid+"$");
+						if (re.exec(id))
+							validator = v;
+					});
+				}
+				return validator;
+			},
+			_execute: function(value, id, messages, form) {
 				var self = this;
-				var messages = {};
-				Joose.O.each(form, function(value, id) {
-					var validator = self.validators[id];
-					if (!validator) {
-						Joose.O.each(self.validators, function(v, vid) {
-							var re = new RegExp("^"+vid+"$");
-							if (re.exec(id))
-								validator = v;
-						});
+				if (value instanceof Array) {
+					for (var i=0; i<value.length; i++) {
+						this._execute(value[i], id + "[]", messages, form);
 					}
-
+				} else if (typeof(value) == 'object') {
+					Joose.O.each(value, function (v, k) {
+						self._execute(v, id + "." + k, messages, form);
+					});
+				} else {
+					var validator = this._findValidator(id);
 					if (validator) {
 						validator.setContext(form);
 						messages[id] = validator.validate(value);
 					}
+				}
+			},
+			execute: function (form) {
+				var self = this;
+				var messages = {};
+				Joose.O.each(form, function(value, id) {
+					self._execute(value, id, messages, form);
 				});
 				return messages;
 			}

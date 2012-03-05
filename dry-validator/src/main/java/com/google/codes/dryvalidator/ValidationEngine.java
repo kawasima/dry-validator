@@ -5,10 +5,13 @@ import java.io.InputStreamReader;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import net.arnx.jsonic.JSON;
 
 import org.apache.commons.io.IOUtils;
 import org.mozilla.javascript.Context;
@@ -104,7 +107,11 @@ public class ValidationEngine {
 		local.setParentScope(null);
 		NativeObject formValuesObj = new NativeObject();
 		for(Map.Entry<String, Object> entry : formValues.entrySet()) {
-			formValuesObj.defineProperty(entry.getKey(), entry.getValue(), NativeObject.READONLY);
+			Object value = ctx.evaluateString(local, JSON.encode(entry.getValue()), "<JSON>", 1, null);
+			formValuesObj.defineProperty(
+					entry.getKey(),
+					value,
+					NativeObject.READONLY);
 		}
 		ScriptableObject.putProperty(local, "values", formValuesObj);
 		Object obj = executeScript("executor.execute(values)", local);
