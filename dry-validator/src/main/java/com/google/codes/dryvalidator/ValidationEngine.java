@@ -5,7 +5,6 @@ import java.io.InputStreamReader;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -119,15 +118,15 @@ public class ValidationEngine {
 		Map<String, List<String>> messages = new HashMap<String, List<String>>();
 		if (obj instanceof NativeObject) {
 			NativeObject nobj = NativeObject.class.cast(obj);
-			for (Map.Entry<String, Object> e : formValues.entrySet()) {
-				Object valuesObj = NativeObject.getProperty(nobj, e.getKey());
-				if (valuesObj instanceof NativeArray) {
-					NativeArray values = NativeArray.class.cast(valuesObj);
+			nobj.entrySet();
+			for (Map.Entry<Object, Object> e : nobj.entrySet()) {
+				if (e.getValue() instanceof NativeArray) {
+					NativeArray values = NativeArray.class.cast(e.getValue());
 					List<String> thisMessages = new ArrayList<String>();
 					for (int i = 0; i < values.getLength(); i++) {
 						thisMessages.add(Context.toString(values.get(i, local)));
 					}
-					messages.put(e.getKey(), thisMessages);
+					messages.put(e.getKey().toString(), thisMessages);
 				}
 			}
 		}
