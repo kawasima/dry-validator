@@ -106,7 +106,13 @@ public class ValidationEngine {
 		local.setParentScope(null);
 		NativeObject formValuesObj = new NativeObject();
 		for(Map.Entry<String, Object> entry : formValues.entrySet()) {
-			Object value = ctx.evaluateString(local, JSON.encode(entry.getValue()), "<JSON>", 1, null);
+			Object value = null;
+			if (entry.getValue() instanceof String || entry.getValue() instanceof Number || entry.getValue() instanceof Boolean ) {
+				value = entry.getValue();
+			} else {
+				System.out.println(entry.getValue().getClass());
+				value = ctx.evaluateString(local, JSON.encode(entry.getValue()), "<JSON>", 1, null);
+			}
 			formValuesObj.defineProperty(
 					entry.getKey(),
 					value,

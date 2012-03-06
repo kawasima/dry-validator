@@ -173,6 +173,7 @@ public class ValidationEngineTest {
 		formValues.put("familyList", familyList);
 		Map<String, List<String>> messages = validationEngine.exec(formValues);
 		Assert.assertEquals(1, messages.size());
+		System.out.println(messages);
 		validationEngine.unregisterAll();
 	}
 

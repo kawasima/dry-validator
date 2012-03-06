@@ -20,13 +20,13 @@ Module(moduleName, function(m) {
 						|| (el.tagName == "textarea" || el.tagName == "TEXTAREA")
 						|| (el.tagName == "select" || el.tagName == "SELECT");
 			},
-			_putValue: function (name, value) {
+			_putValue: function (el, value, multiple) {
 				var ctx = this.formItems;
-				var names = name.split(/¥./);
+				var names = el.getAttribute("name").split("\.");
 				var propName = names.pop();
 				Joose.A.each(names, function (n) {
 					// for Nested properties (e.g. foo[0].bar[1].name)
-					if (n.match(/^(.+)¥[(¥d+)¥]$/)) {
+					if (n.match(/^(.+)\[(\d+)\]$/)) {
 						n = RegExp.$1;
 						var idx = RegExp.$2;
 						if (!ctx[n])
@@ -38,11 +38,17 @@ Module(moduleName, function(m) {
 						ctx = ctx[n];
 					}
 				});
-				if (ctx[propName] != undefined && !(ctx[propName] instanceof Array))
-					ctx[propName] = [ctx[propName]];
-				ctx[propName] = value;
+				if (multiple) {
+					if (!(ctx[propName] instanceof Array))
+						ctx[propName] = (ctx[propName]) ? [ctx[propName]] : [];
+
+					if (typeof(value) != 'undefined')
+						ctx[propName].push(value);
+				} else {
+					ctx[propName] = value;
+				}
 			},
-			_getValue: function (node) {
+			_getValue: function (node, multiple) {
 				if (node.getAttribute("type") == "radio" || node.getAttribute("type") == "checkbox") {
 					if (node.checked) {
 						var val = node.value;
@@ -57,18 +63,26 @@ Module(moduleName, function(m) {
 							values.push(option.value);
 						}
 					});
-					return (values.length > 0) ? values : null;
+					return (multiple) ? values : values.pop();
 				} else {
 					return node.value;
 				}
+			},
+			_isMultiple: function(el, exists) {
+				return ((el.tagName == "select" || el.tagName == "SELECT") && el.getAttribute("multiple"))
+						|| ((el.getAttribute("type") == "checkbox" || el.getAttribute("type") == "CHECKBOX") && exists)
 			},
 			setup: function(formId) {
 				var self = this;
 				this.formItems = {};
 				var form = document.getElementById(formId);
+				var exists = {};
 				Joose.A.each(form.getElementsByTagName("*"), function(item) {
 					if (self._isFormItem(item)){
-						self._putValue(item.getAttribute("name"), self._getValue(item));
+						var name = item.getAttribute("name")
+						var multiple = self._isMultiple(item, exists[name]);
+						self._putValue(item, self._getValue(item, multiple), multiple);
+						exists[name] = 1;
 					}
 				});
 
@@ -151,12 +165,23 @@ Module(moduleName, function(m) {
 		has: {
 			label: { is: "rw" },
 			messageFormat: { is:"rw" },
-			context: { is: "rw" }
+			context: { is: "rw" },
+			counts: { is: "rw" }
 		},
 		methods: {
 			validate: Joose.emptyFunction,
 			getValue: function(id) {
 				return this.context[id];
+			},
+			getCount: function(depth) {
+				if (typeof(depth) == 'undefined')
+					depth = 0;
+
+				if (!this.counts || this.counts.length == 0) {
+					return 0;
+				} else {
+					return this.counts[this.counts.length - 1 + depth];
+				}
 			}
 		}
 	});
@@ -180,31 +205,38 @@ Module(moduleName, function(m) {
 				}
 				return validator;
 			},
-			_execute: function(value, id, messages, form) {
+			_execute: function(value, id, counts) {
 				var self = this;
+				if (!counts)
+					counts = [];
+
 				if (value instanceof Array) {
 					for (var i=0; i<value.length; i++) {
-						this._execute(value[i], id + "[]", messages, form);
+						counts.push(i+1);
+						this._execute(value[i], id + "[]", counts);
+						counts.pop();
 					}
 				} else if (typeof(value) == 'object') {
 					Joose.O.each(value, function (v, k) {
-						self._execute(v, id + "." + k, messages, form);
+						self._execute(v, id + "." + k, counts);
 					});
 				} else {
 					var validator = this._findValidator(id);
 					if (validator) {
-						validator.setContext(form);
-						messages[id] = validator.validate(value);
+						validator.setContext(this._form)
+						validator.setCounts(counts);
+						this._messages[id] = validator.validate(value);
 					}
 				}
 			},
 			execute: function (form) {
 				var self = this;
-				var messages = {};
-				Joose.O.each(form, function(value, id) {
-					self._execute(value, id, messages, form);
+				this._messages = {};
+				this._form = form;
+				Joose.O.each(this._form, function(value, id) {
+					self._execute(value, id);
 				});
-				return messages;
+				return this._messages;
 			}
 		}
 	});
@@ -385,19 +417,19 @@ Module(moduleName, function(m) {
 			validators: { is: "rw", init: function() {return [];} }
 		},
 		classMethods: {
-			make: function(obj) {
+			make: function (obj) {
 				var self = new m.CompositeValidator();
-				self.label = obj['label'] || '項目';
+				self.label = obj['label'] || 'item';
 				delete(obj.label);
 
-				for(var key in obj) {
+				for (var key in obj) {
 					var validator = null;
-					Joose.A.each(m.meta._elements, function(element) {
-						if(element.meta.getName().match('\\.'+ Joose.S.uppercaseFirst(key) +'Validator$')) {
+					Joose.A.each(m.meta._elements, function (element) {
+						if (element.meta.getName().match('\\.'+ Joose.S.uppercaseFirst(key) +'Validator$')) {
 							validator = element.meta.instantiate({label:self.label});
 						}
 					});
-					if(validator) {
+					if (validator) {
 						validator.setup(obj[key]);
 						self.getValidators().push(validator);
 					}
