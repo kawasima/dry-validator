@@ -171,7 +171,20 @@ Module(moduleName, function(m) {
 		methods: {
 			validate: Joose.emptyFunction,
 			getValue: function(id) {
-				return this.context[id];
+				var self = this;
+				var ctx = this.context;
+				Joose.A.each(id.split("\."), function (n, i) {
+					if (n.match(/^(.+)\[(\d+)?\]$/)) {
+						n = RegExp.$1;
+						var idx = RegExp.$2;
+						if (idx == "" || typeof(idx) == 'undefined')
+							idx = self.counts[i]-1;
+						ctx = ctx[n][idx];
+					} else {
+						ctx = ctx[n];
+					}
+				});
+				return ctx;
 			},
 			getCount: function(depth) {
 				if (typeof(depth) == 'undefined')
@@ -197,7 +210,7 @@ Module(moduleName, function(m) {
 			_findValidator: function (id) {
 				var validator = this.validators[id];
 				if (!validator) {
-					Joose.O.each(self.validators, function(v, vid) {
+					Joose.O.each(this.validators, function(v, vid) {
 						var re = new RegExp("^"+vid+"$");
 						if (re.exec(id))
 							validator = v;
@@ -206,7 +219,6 @@ Module(moduleName, function(m) {
 				return validator;
 			},
 			_execute: function(value, id, counts) {
-				var self = this;
 				if (!counts)
 					counts = [];
 
@@ -216,16 +228,21 @@ Module(moduleName, function(m) {
 						this._execute(value[i], id + "[]", counts);
 						counts.pop();
 					}
-				} else if (typeof(value) == 'object') {
+				} else if (value != null && typeof(value) == 'object') {
+					var self = this;
 					Joose.O.each(value, function (v, k) {
 						self._execute(v, id + "." + k, counts);
 					});
 				} else {
 					var validator = this._findValidator(id);
+
 					if (validator) {
-						validator.setContext(this._form)
+						validator.setContext(this._form);
 						validator.setCounts(counts);
-						this._messages[id] = validator.validate(value);
+						var msgs = validator.validate(value);
+						if (msgs) {
+							this._messages[id] = this._messages[id] ? this._messages[id].concat(msgs) : msgs;
+						}
 					}
 				}
 			},
@@ -442,6 +459,7 @@ Module(moduleName, function(m) {
 				var self = this;
 				var results = [];
 				Joose.A.each(this.validators, function(validator) {
+					validator.setCounts(self.getCounts());
 					validator.setContext(self.getContext());
 					var result = validator.validate(value);
 					if (result)

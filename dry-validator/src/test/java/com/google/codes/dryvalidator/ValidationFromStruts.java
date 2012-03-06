@@ -2,12 +2,12 @@ package com.google.codes.dryvalidator;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.arnx.jsonic.JSON;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.Field;
@@ -43,7 +43,8 @@ public class ValidationFromStruts {
 		for(Field field : (List<Field>)form.getFields()) {
 			FormItem formItem = new FormItem();
 			formItem.setId(field.getProperty());
-			formItem.setLabel(field.getKey());
+			String label = field.getArg(0).getKey();
+			formItem.setLabel(label == null ? field.getKey() : label);
 			for(String depend : (List<String>)field.getDependencyList()) {
 				String value = null;
 				if(StringUtils.equals(depend, "required")) {
@@ -61,11 +62,15 @@ public class ValidationFromStruts {
 			validationEngine.register(formItem);
 		}
 
-		Map<String, Object> formValues = new HashMap<String, Object>();
-		formValues.put("hasSpouse", true);
-		formValues.put("familyName", "01234567890");
-		formValues.put("childrenNum", "");
-		formValues.put("genderCd", false);
+		Map formValues = JSON.decode("{"
+				+ "\"hasSpouse\": true,"
+				+ "\"familyName\": \"01234567890\","
+				+ "\"childrenNum\": null,"
+				+ "\"genderCd\": false,"
+				+ "\"family\": ["
+				+   "{\"name\": null, \"nameKana\": \"hoge\"},"
+				+   "{\"name\": \"Tom\", \"nameKana\": \"Tomu\"},"
+				+ "]}");
 		Map<String, List<String>> messages = validationEngine.exec(formValues);
 		List<String> childrenNumMessages = messages.get("childrenNum");
 		Assert.assertTrue("配偶者がありのときは、子供の人数が必須になる", childrenNumMessages != null && childrenNumMessages.size() == 1);

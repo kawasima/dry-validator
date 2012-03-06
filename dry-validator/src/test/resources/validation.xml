@@ -87,11 +87,19 @@
 					<var-value>{min:1}</var-value>
 				</var>
 			</field>
-			<field property="family\[\d+\].name" depends="letterType">
+			<field property="family[].name" depends="letterType,function">
 				<arg key="家族氏名" resource="false"/>
 				<var>
 					<var-name>letterType</var-name>
 					<var-value>Alpha</var-value>
+				</var>
+				<var>
+					<var-name>function</var-name>
+					<var-value><![CDATA[
+						if(this.getValue("family[].nameKana") != null && !value) {
+							return [m.format("{0}が入力されている場合、{1}は必須です", "氏名カナ", this.label)]
+						}
+					]]></var-value>
 				</var>
 			</field>
 		</form>
