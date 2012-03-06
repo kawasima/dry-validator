@@ -1,9 +1,11 @@
 package com.google.codes.dryvalidator;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,16 +24,21 @@ public class FormTest {
 		ctx.setOptimizationLevel(-1);
 		Global global = Main.getGlobal();
 		global.init(ctx);
-		scope = ctx.initStandardObjects();
+		scope = ctx.initStandardObjects(global);
 	}
 	@Test
-	public void test() throws IOException, URISyntaxException {
-		Main.processSource(ctx, "src/main/resources/com/google/codes/dryvalidator/joose.js");
-		Main.processSource(ctx, "src/main/resources/com/google/codes/dryvalidator/dry-validator.js");
-		Main.processSource(ctx, "src/test/resources/env.rhino.js");
+	public void createForm() throws IOException, URISyntaxException {
+		ctx.evaluateString(scope, FileUtils.readFileToString(new File(
+				"src/main/resources/com/google/codes/dryvalidator/joose.js")), "joose.js", 1, null);
+		ctx.evaluateString(scope, FileUtils.readFileToString(new File(
+				"src/main/resources/com/google/codes/dryvalidator/dry-validator.js"), "UTF-8"), "dry-validator.js", 1, null);
+		ctx.evaluateString(scope, FileUtils.readFileToString(new File(
+				"src/test/resources/env.rhino.js")), "env.rhino.js", 1, null);
 		URL url = getClass().getClassLoader().getResource("validation.html");
 		eval("Envjs('"+url.toString().replaceFirst("file:", "file://")+"');");
-		Main.processSource(ctx, "src/test/resources/form-test.js");
+		ctx.evaluateString(scope, FileUtils.readFileToString(new File(
+				"src/test/resources/form-test.js"), "UTF-8"), "form-test.js", 1, null);
+
 	}
 
 	@After
@@ -41,6 +48,6 @@ public class FormTest {
 
 	private Object eval(String text) {
 		Script script = ctx.compileString(text, "<cmd>", 1, null);
-		return Main.evaluateScript(script, ctx, Main.getGlobal());
+		return script.exec(ctx, scope);
 	}
 }
