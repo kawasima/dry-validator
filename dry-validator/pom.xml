@@ -18,9 +18,9 @@
 	</distributionManagement>
 
 	<scm>
-		<connection>scm:svn:http://dry-validator.googlecode.com/svn/trunk/</connection>
-		<developerConnection>scm:svn:https://dry-validator.googlecode.com/svn/trunk/</developerConnection>
-		<url>scm:svn:http://dry-validator.googlecode.com/svn/trunk/</url>
+		<connection>scm:svn:http://dry-validator.googlecode.com/svn/trunk/dry-validator</connection>
+		<developerConnection>scm:svn:https://dry-validator.googlecode.com/svn/trunk/dry-validator</developerConnection>
+		<url>scm:svn:http://dry-validator.googlecode.com/svn/trunk/dry-validator</url>
 	</scm>
 
 
