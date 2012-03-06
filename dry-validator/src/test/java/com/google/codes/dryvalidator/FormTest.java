@@ -1,31 +1,37 @@
 package com.google.codes.dryvalidator;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.net.URISyntaxException;
+import java.net.URL;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Script;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.tools.shell.Global;
+import org.mozilla.javascript.tools.shell.Main;
 
 public class FormTest {
 	Context ctx;
-	ScriptableObject global;
+	Scriptable scope;
 	@Before
 	public void setUp() {
 		ctx = Context.enter();
-		global = ctx.initStandardObjects();
+		ctx.setOptimizationLevel(-1);
+		Global global = Main.getGlobal();
+		global.init(ctx);
+		scope = ctx.initStandardObjects();
 	}
 	@Test
-	public void test() throws IOException {
-		loadScript("com/google/codes/dryvalidator/joose.js");
-		loadScript("com/google/codes/dryvalidator/dry-validator.js");
-		ctx.evaluateString(global, "", "<cmd>", 1, null);
+	public void test() throws IOException, URISyntaxException {
+		Main.processSource(ctx, "src/main/resources/com/google/codes/dryvalidator/joose.js");
+		Main.processSource(ctx, "src/main/resources/com/google/codes/dryvalidator/dry-validator.js");
+		Main.processSource(ctx, "src/test/resources/env.rhino.js");
+		URL url = getClass().getClassLoader().getResource("validation.html");
+		eval("Envjs('"+url.toString().replaceFirst("file:", "file://")+"');");
+		Main.processSource(ctx, "src/test/resources/form-test.js");
 	}
 
 	@After
@@ -33,14 +39,8 @@ public class FormTest {
 		Context.exit();
 	}
 
-	private void loadScript(String path) throws IOException {
-		Reader in = null;
-		try {
-			in = new InputStreamReader(FileUtils.openInputStream(
-					new File("src/main/resources/" + path)));
-			ctx.evaluateReader(global, in, path, 1, null);
-		} finally {
-			IOUtils.closeQuietly(in);
-		}
+	private Object eval(String text) {
+		Script script = ctx.compileString(text, "<cmd>", 1, null);
+		return Main.evaluateScript(script, ctx, Main.getGlobal());
 	}
 }

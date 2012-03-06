@@ -16,9 +16,9 @@ Module(moduleName, function(m) {
 		methods: {
 			_isFormItem: function (el) {
 				if (!el || !el.name || !el.getAttribute("name")) return false;
-				return (item.name == "input" || item.name == "INPUT")
-						&& (item.name == "textarea" || item.name == "TEXTAREA")
-						&& (item.name == "select" || item.name == "SELECT");
+				return (el.tagName == "input" || el.tagName == "INPUT")
+						|| (el.tagName == "textarea" || el.tagName == "TEXTAREA")
+						|| (el.tagName == "select" || el.tagName == "SELECT");
 			},
 			_putValue: function (name, value) {
 				var ctx = this.formItems;
@@ -40,7 +40,6 @@ Module(moduleName, function(m) {
 				});
 				if (ctx[propName] != undefined && !(ctx[propName] instanceof Array))
 					ctx[propName] = [ctx[propName]];
-
 				ctx[propName] = value;
 			},
 			_getValue: function (node) {
@@ -60,7 +59,7 @@ Module(moduleName, function(m) {
 					});
 					return (values.length > 0) ? values : null;
 				} else {
-					return item.value;
+					return node.value;
 				}
 			},
 			setup: function(formId) {
@@ -68,8 +67,8 @@ Module(moduleName, function(m) {
 				this.formItems = {};
 				var form = document.getElementById(formId);
 				Joose.A.each(form.getElementsByTagName("*"), function(item) {
-					if (this._isFormItem(item)){
-						this._putValue(item.getAttribute("name"), this._getValue(item));
+					if (self._isFormItem(item)){
+						self._putValue(item.getAttribute("name"), self._getValue(item));
 					}
 				});
 
