@@ -7,6 +7,7 @@ public class FormItem implements Serializable {
 
 	private String id;
 	private String label;
+	private String messageDecorator;
 	private Validations validations;
 
 	public FormItem() {
@@ -25,6 +26,14 @@ public class FormItem implements Serializable {
 	}
 	public void setLabel(String label) {
 		this.label = label;
+	}
+
+	public String getMessageDecorator() {
+		return messageDecorator;
+	}
+
+	public void setMessageDecorator(String messageDecorator) {
+		this.messageDecorator = messageDecorator;
 	}
 
 	public Validations getValidations() {

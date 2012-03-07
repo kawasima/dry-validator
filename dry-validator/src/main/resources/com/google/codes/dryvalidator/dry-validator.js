@@ -3,7 +3,9 @@ var dryValidatorModuleName;
 Module(moduleName, function(m) {
 	m.format = function(format) {
 		var args = arguments;
-		return format.replace(/\{(\d+)\}/g, function(m,c) { return args[parseInt(c)+1]});
+		return format
+			.replace(/\{(\d+)\}/g, function(m,c) { return args[parseInt(c)+1]})
+			.replace("{count}", this.meta && this.meta.isa && this.meta.isa(m.Validator) ? this.getCount() : "");
 	};
 
 	Class("Form", {
@@ -72,18 +74,22 @@ Module(moduleName, function(m) {
 				return ((el.tagName == "select" || el.tagName == "SELECT") && el.getAttribute("multiple"))
 						|| ((el.getAttribute("type") == "checkbox" || el.getAttribute("type") == "CHECKBOX") && exists)
 			},
-			setup: function(formId) {
+			setup: function(forms) {
 				var self = this;
 				this.formItems = {};
-				var form = document.getElementById(formId);
-				var exists = {};
-				Joose.A.each(form.getElementsByTagName("*"), function(item) {
-					if (self._isFormItem(item)){
-						var name = item.getAttribute("name")
-						var multiple = self._isMultiple(item, exists[name]);
-						self._putValue(item, self._getValue(item, multiple), multiple);
-						exists[name] = 1;
-					}
+				if (!(forms instanceof Array))
+					forms = [forms];
+				Joose.A.each(forms, function (f) {
+					var form = typeof(f.nodeType) == 'number' ? f : document.getElementById(f);
+					var exists = {};
+					Joose.A.each(form.getElementsByTagName("*"), function(item) {
+						if (self._isFormItem(item)){
+							var name = item.getAttribute("name")
+							var multiple = self._isMultiple(item, exists[name]);
+							self._putValue(item, self._getValue(item, multiple), multiple);
+							exists[name] = 1;
+						}
+					});
 				});
 
 				return this;
@@ -189,10 +195,10 @@ Module(moduleName, function(m) {
 			getCount: function(depth) {
 				if (typeof(depth) == 'undefined')
 					depth = 0;
-
 				if (!this.counts || this.counts.length == 0) {
 					return 0;
 				} else {
+console.log(this.counts[this.counts.length -1+ depth]);
 					return this.counts[this.counts.length - 1 + depth];
 				}
 			}
@@ -271,7 +277,7 @@ Module(moduleName, function(m) {
 			},
 			validate: function(value) {
 				if(this.required && (value == null || String(value) == "" || typeof(value) == "undefined")) {
-					return [m.format(this.messageFormat, this.label)];
+					return [m.format.apply(this, [this.messageFormat, this.label])];
 				}
 			}
 		}
@@ -290,7 +296,7 @@ Module(moduleName, function(m) {
 			},
 			validate: function(value) {
 				if(value && value.toString().length > this.length) {
-					return [m.format(this.messageFormat, this.label, this.length)];
+					return [m.format.apply(this, [this.messageFormat, this.label, this.length])];
 				}
 			}
 		}
@@ -309,7 +315,7 @@ Module(moduleName, function(m) {
 			},
 			validate: function(value) {
 				if(value && !this.characterClass.match(value.toString())) {
-					return [m.format(this.messageFormat, this.label, this.characterClass.getLabel())];
+					return [m.format.apply(this, [this.messageFormat, this.label, this.characterClass.getLabel()])];
 				}
 			}
 		}
@@ -343,11 +349,11 @@ Module(moduleName, function(m) {
 					return;
 				if(value < this.min || value > this.max) {
 					if(this.messageFormat)
-						return [m.format(this.messageFormat, this.label)];
+						return [m.format.apply(this, [this.messageFormat, this.label])];
 					else if (value < this.min)
-						return [m.format(this.wittyMessageFormat["min"], this.label, this.min)];
+						return [m.format.apply(this, [this.wittyMessageFormat["min"], this.label, this.min])];
 					else if (value > this.max)
-						return [m.format(this.wittyMessageFormat["max"], this.label, this.max)];
+						return [m.format.apply(this, [this.wittyMessageFormat["max"], this.label, this.max])];
 				}
 			}
 		}
@@ -391,16 +397,16 @@ Module(moduleName, function(m) {
 				}
 				if(valueLen < this.min || valueLen > this.max) {
 					if(this.messageFormat)
-						return [m.format(this.messageFormat, this.label)];
+						return [m.format.apply(this, [this.messageFormat, this.label])];
 
 					if (this.min > 0 && this.max < Number.MAX_VALUE)
-						return [m.format(this.wittyMessageFormat["minmax"], this.label, this.min, this.max)];
+						return [m.format.apply(this, [this.wittyMessageFormat["minmax"], this.label, this.min, this.max])];
 					else if (this.min == 1)
-						return [m.format(this.wittyMessageFormat["min1"], this.label)];
+						return [m.format.apply(this, [this.wittyMessageFormat["min1"], this.label])];
 					else if (this.min > 0)
-						return [m.format(this.wittyMessageFormat["min"], this.label, this.min)];
+						return [m.format.apply(this, [this.wittyMessageFormat["min"], this.label, this.min])];
 					else if (this.max < Number.MAX_VALUE)
-						return [m.format(this.wittyMessageFormat["max"], this.label, this.max)];
+						return [m.format.apply(this, [this.wittyMessageFormat["max"], this.label, this.max])];
 				}
 			}
 		}
@@ -431,13 +437,21 @@ Module(moduleName, function(m) {
 	Class("CompositeValidator", {
 		isa: m.Validator,
 		has: {
-			validators: { is: "rw", init: function() {return [];} }
+			validators: { is: "rw", init: function() {return [];} },
+			messageDecorator: { is: "rw" }
 		},
 		classMethods: {
 			make: function (obj) {
 				var self = new m.CompositeValidator();
 				self.label = obj['label'] || 'item';
-				delete(obj.label);
+				delete(obj['label']);
+
+				if (typeof(obj['messageDecorator']) == "string" || obj['messageDecorator'] instanceof String) {
+					self.setMessageDecorator(eval("function (message) {" + obj['messageDecorator'] + "}"));
+				} else if (typeof(obj['messageDecorator']) == "function") {
+					self.setMessageDecorator(obj['messageDecorator']);
+				}
+				delete(obj['messageDecorator']);
 
 				for (var key in obj) {
 					var validator = null;
@@ -462,8 +476,13 @@ Module(moduleName, function(m) {
 					validator.setCounts(self.getCounts());
 					validator.setContext(self.getContext());
 					var result = validator.validate(value);
-					if (result)
-						Joose.A.each(result, function(msg) { results.push(msg) });
+					if (result) {
+						Joose.A.each(result, function(msg) {
+							if (self.messageDecorator)
+								msg = self.messageDecorator(msg);
+							results.push(msg)
+						});
+					}
 				});
 				return results;
 			},

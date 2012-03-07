@@ -81,7 +81,7 @@ public class ValidationEngine {
 		Object wrappedValidation = Context.javaToJS("String", local);
 		ScriptableObject.putProperty(local, "formItem", wrappedValidation);
 		executeScript(
-				"var validation = {label: formItem.label};\n"
+				"var validation = { label: formItem.label, messageDecorator: formItem.messageDecorator };\n"
 						+ "Joose.A.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
 						+ "executor.addValidator(formItem.id, DRYValidator.CompositeValidator.make(validation));\n",
 				local);
@@ -94,7 +94,7 @@ public class ValidationEngine {
 		Object wrappedValidation = Context.javaToJS(formItem, local);
 		ScriptableObject.putProperty(local, "formItem", wrappedValidation);
 		executeScript(
-				"var validation = {label: formItem.label};\n"
+				"var validation = { label: formItem.label, messageDecorator: formItem.messageDecorator };\n"
 						+ "Joose.A.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
 						+ "executor.addValidator(formItem.id, DRYValidator.CompositeValidator.make(validation));\n",
 				local);

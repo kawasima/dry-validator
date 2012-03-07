@@ -62,6 +62,7 @@ public class ValidationFromStruts {
 			validationEngine.register(formItem);
 		}
 
+		@SuppressWarnings("rawtypes")
 		Map formValues = JSON.decode("{"
 				+ "\"hasSpouse\": true,"
 				+ "\"familyName\": \"01234567890\","

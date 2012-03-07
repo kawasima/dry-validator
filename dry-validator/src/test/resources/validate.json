@@ -1,11 +1,15 @@
 {
-	familyName: {
-		label: "氏名",
-		required: true,
-		maxLength: 10,
-		letterType: "Zenkaku",
-		'function': function() {
-			return ["特別なチェック"];
-		}
+	"familyName": {
+		"label": "氏名",
+		"required": true,
+		"maxLength": 10,
+		"letterType": "Zenkaku",
+		"function": "return ['特別なチェック']"
+	},
+	"children[].name": {
+		"label": "お子様の名前",
+		"required": true,
+		"maxLength": 5,
+		"messageDecorator": "return DRYValidator.format.apply(this, ['{count}人目の' + message])"
 	}
 }

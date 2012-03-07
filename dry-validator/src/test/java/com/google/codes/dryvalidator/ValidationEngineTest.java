@@ -6,9 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.arnx.jsonic.JSON;
-
-import org.apache.commons.beanutils.BeanUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -105,7 +102,7 @@ public class ValidationEngineTest {
 		Context ctx = validationEngine.getContext();
 		ScriptableObject scope = validationEngine.getGlobalScope();
 
-		Object obj = ctx.evaluateString(scope,
+		ctx.evaluateString(scope,
 			"DRYValidator.CharacterClass.enable(['Hiragana', 'Katakana', 'Unknown']);"
 			+ "console.log('enable='+DRYValidator.CharacterClass.enable());"
 				, "<cmd>", 1, null);
