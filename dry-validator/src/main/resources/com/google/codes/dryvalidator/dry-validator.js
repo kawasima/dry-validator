@@ -198,7 +198,6 @@ Module(moduleName, function(m) {
 				if (!this.counts || this.counts.length == 0) {
 					return 0;
 				} else {
-console.log(this.counts[this.counts.length -1+ depth]);
 					return this.counts[this.counts.length - 1 + depth];
 				}
 			}
