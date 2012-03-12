@@ -37,17 +37,19 @@ Module(moduleName, function(m) {
 							ctx[n].push({});
 						ctx = ctx[n][idx];
 					} else {
+						if (!ctx[n])
+							ctx[n] = {};
 						ctx = ctx[n];
 					}
 				});
-				if (multiple) {
-					if (!(ctx[propName] instanceof Array))
-						ctx[propName] = (ctx[propName]) ? [ctx[propName]] : [];
-
-					if (typeof(value) != 'undefined')
+				if (typeof(value) != 'undefined') {
+					if (multiple) {
+						if (!(ctx[propName] instanceof Array))
+							ctx[propName] = (ctx[propName]) ? [ctx[propName]] : [];
 						ctx[propName].push(value);
-				} else {
-					ctx[propName] = value;
+					} else {
+						ctx[propName] = value;
+					}
 				}
 			},
 			_getValue: function (node, multiple) {

@@ -50,6 +50,7 @@ public class ValidationFromJSONTest {
 				+   "{\"name\": \"\"}"
 				+ "]}");
 
+		@SuppressWarnings("unchecked")
 		Map<String, List<String>> messages2 = validationEngine.exec(formValues);
 		Assert.assertNotNull(messages2.get("children[].name"));
 		Assert.assertEquals(1, messages2.get("children[].name").size());

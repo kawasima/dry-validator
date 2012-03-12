@@ -64,10 +64,21 @@
 			<tr>
 				<th>家族氏名</th>
 				<td>
+					<input type="text" name="father.name" value="Jim"/>
 					<ul>
-						<li>1人目<input type="text" name="family[0].name"/></li>
-						<li>2人目<input type="text" name="family[1].name" value="たかし"/></li>
-						<li>3人目<input type="text" name="family[2].name"/></li>
+						<li>
+							<input type="radio" name="family[0].inputFlg" value="true"/>
+							1人目<input type="text" name="family[0].name"/>
+						</li>
+						<li>
+							<input type="radio" name="family[1].inputFlg" value="true" checked="checked"/>
+							<input type="radio" name="family[1].inputFlg" value="false"/>
+							2人目<input type="text" name="family[1].name" value="たかし"/>
+						</li>
+						<li>
+							<input type="radio" name="family[2].inputFlg" value="true"/>
+							3人目<input type="text" name="family[2].name"/>
+						</li>
 					</ul>
 				</td>
 		</table>
