@@ -152,7 +152,7 @@ public class ValidationEngineTest {
 	}
 
 	@Test
-	public void ネストしたフォーム() throws Exception {
+	public void ネストしたフォーム_配列() throws Exception {
 		// 入力チェックのを定義する
 		FormItem formItem = new FormItem();
 		formItem.setId("familyList[].name");
@@ -169,11 +169,29 @@ public class ValidationEngineTest {
 		familyList.add(family2);
 		formValues.put("familyList", familyList);
 		Map<String, List<String>> messages = validationEngine.exec(formValues);
-		Assert.assertEquals(1, messages.size());
+		Assert.assertTrue(messages.containsKey("familyList[].name"));
+		Assert.assertEquals(1, messages.get("familyList[].name").size());
 		System.out.println(messages);
 		validationEngine.unregisterAll();
 	}
 
+	@Test
+	public void ネストしたフォーム() throws Exception {
+		FormItem formItem = new FormItem();
+		formItem.setId("family.name");
+		formItem.setLabel("氏名");
+    	formItem.getValidations().addValidation(new Validation("maxLength", "2"));
+		validationEngine.register(formItem);
+		Map<String, Object> formValues = new HashMap<String, Object>();
+		FamilyDto family1 = new FamilyDto();
+		family1.name = "太郎だ";
+		formValues.put("family", family1);
+		Map<String, List<String>> messages = validationEngine.exec(formValues);
+		Assert.assertTrue(messages.containsKey("family.name"));
+		Assert.assertEquals(1, messages.get("family.name").size());
+		System.out.println(messages);
+		validationEngine.unregisterAll();
+	}
 
 	public static class FamilyDto implements Serializable {
 		private static final long serialVersionUID = 1059538278850982523L;

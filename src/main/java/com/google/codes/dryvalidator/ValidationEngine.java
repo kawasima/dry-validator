@@ -112,7 +112,8 @@ public class ValidationEngine {
 					|| entry.getValue() instanceof Number || entry.getValue() instanceof Boolean ) {
 				value = entry.getValue();
 			} else {
-				value = ctx.evaluateString(local, JSON.encode(entry.getValue()), "<JSON>", 1, null);
+				System.out.println(JSON.encode(entry.getValue()));
+				value = ctx.evaluateString(local, "(" + JSON.encode(entry.getValue()) + ")", "<JSON>", 1, null);
 			}
 			formValuesObj.defineProperty(
 					entry.getKey(),
