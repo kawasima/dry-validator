@@ -50,6 +50,8 @@ Module(moduleName, function(m) {
 					} else {
 						ctx[propName] = value;
 					}
+				} else {
+					ctx[propName] = undefined;
 				}
 			},
 			_getValue: function (node, multiple) {

@@ -87,6 +87,11 @@
 					<var-value>{min:1}</var-value>
 				</var>
 			</field>
+
+			<field property="family[].inputFlg" depends="required">
+				<arg key="家族登録フラグ" resource="false"/>
+			</field>
+
 			<field property="family[].name" depends="letterType,function">
 				<arg key="家族氏名" resource="false"/>
 				<var>
@@ -96,7 +101,7 @@
 				<var>
 					<var-name>function</var-name>
 					<var-value><![CDATA[
-						if(this.getValue("family[].nameKana") != null && !value) {
+						if(this.getValue("family[].inputFlg") != null && !value) {
 							return [m.format("{0}が入力されている場合、{1}は必須です", "氏名カナ", this.label)]
 						}
 					]]></var-value>
