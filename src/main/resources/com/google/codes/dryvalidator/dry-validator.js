@@ -42,6 +42,9 @@ Module(moduleName, function(m) {
 						ctx = ctx[n];
 					}
 				});
+				if (typeof(ctx[propName]) == 'undefined') {
+					ctx[propName] = undefined;
+				}
 				if (typeof(value) != 'undefined') {
 					if (multiple) {
 						if (!(ctx[propName] instanceof Array))
@@ -50,8 +53,6 @@ Module(moduleName, function(m) {
 					} else {
 						ctx[propName] = value;
 					}
-				} else {
-					ctx[propName] = undefined;
 				}
 			},
 			_getValue: function (node, multiple) {
