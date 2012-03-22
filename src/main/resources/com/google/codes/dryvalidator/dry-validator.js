@@ -169,7 +169,7 @@ Module(moduleName, function(m) {
 	m.CharacterClass.register("Alpha", "アルファベット", "[A-Za-z]");
 	m.CharacterClass.register("Digit", "半角数字", "[0-9]");
 	m.CharacterClass.register("Alnum", "半角英数字", "[A-Za-z0-9]");
-	m.CharacterClass.register("Punct", "記号", '[!\"#\$%&\'\(\)\*\+,\-\.\/:;<=>\?@\[\\\]\^_\`\{\|\}\~]');
+	m.CharacterClass.register("Punct", "記号", '[!"#\$%&\'\\(\\)\\*\\+,\\-\\.\\/:;<=>\\?@\\[\\\\\\]\\^_\\`\\{\\|\\}\\~]');
 	m.CharacterClass.register("Alnum+Punct", "半角英数記号");
 
 	Class("Validator", {

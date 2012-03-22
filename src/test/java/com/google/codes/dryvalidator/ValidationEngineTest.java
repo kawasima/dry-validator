@@ -68,8 +68,23 @@ public class ValidationEngineTest {
 		Assert.assertTrue(!validationEngine.exec("NAME", null).isEmpty());
 		Assert.assertTrue(validationEngine.exec("NAME", "abc").isEmpty());
 		validationEngine.unregisterAll();
-
-
+	}
+	
+	@Test
+	public void testPunct() {
+		FormItem formItem = new FormItem();
+		formItem.setId("NAME");
+		formItem.setLabel("氏名");
+    	formItem.getValidations().addValidation(new Validation("letterType", "Punct"));
+		validationEngine.register(formItem);
+		List<String> messages = validationEngine.exec("NAME", "!");
+		Assert.assertTrue(messages.isEmpty());
+		messages = validationEngine.exec("NAME", "![]()~+-.");
+		Assert.assertTrue(messages.isEmpty());
+		messages = validationEngine.exec("NAME", "\\");
+		Assert.assertTrue(messages.isEmpty());
+		
+		validationEngine.unregisterAll();
 	}
 
 	@Test
