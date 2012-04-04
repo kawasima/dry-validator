@@ -18,18 +18,11 @@
 	</distributionManagement>
 
 	<scm>
-		<connection>scm:svn:http://dry-validator.googlecode.com/svn/trunk/dry-validator</connection>
-		<developerConnection>scm:svn:https://dry-validator.googlecode.com/svn/trunk/dry-validator</developerConnection>
-		<url>scm:svn:http://dry-validator.googlecode.com/svn/trunk/dry-validator</url>
+		<url>scm:git:git@github.com:kawasima/dry-validator.git</url>
+		<connection>scm:git:git@github.com:kawasima/dry-validator.git</connection>
+		<developerConnection>scm:git:git@github.com:kawasima/dry-validator.git</developerConnection>
 	</scm>
 
-
-	<repositories>
-		<repository>
-			<id>seasar-repository</id>
-			<url>http://maven.seasar.org/maven2/</url>
-		</repository>
-	</repositories>
 
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
