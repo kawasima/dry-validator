@@ -251,6 +251,8 @@ Module(moduleName, function(m) {
 						validator.setCounts(counts);
 						var msgs = validator.validate(value);
 						if (msgs) {
+							var indexes = counts.slice(0);
+							id = id.replace(/\[\]/g, function() { return "[" + (indexes.shift()-1) + "]" });
 							this._messages[id] = this._messages[id] ? this._messages[id].concat(msgs) : msgs;
 						}
 					}

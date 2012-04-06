@@ -69,7 +69,7 @@ public class ValidationEngineTest {
 		Assert.assertTrue(validationEngine.exec("NAME", "abc").isEmpty());
 		validationEngine.unregisterAll();
 	}
-	
+
 	@Test
 	public void testPunct() {
 		FormItem formItem = new FormItem();
@@ -83,7 +83,7 @@ public class ValidationEngineTest {
 		Assert.assertTrue(messages.isEmpty());
 		messages = validationEngine.exec("NAME", "\\");
 		Assert.assertTrue(messages.isEmpty());
-		
+
 		validationEngine.unregisterAll();
 	}
 
@@ -184,9 +184,9 @@ public class ValidationEngineTest {
 		familyList.add(family2);
 		formValues.put("familyList", familyList);
 		Map<String, List<String>> messages = validationEngine.exec(formValues);
-		Assert.assertTrue(messages.containsKey("familyList[].name"));
-		Assert.assertEquals(1, messages.get("familyList[].name").size());
 		System.out.println(messages);
+		Assert.assertTrue(messages.containsKey("familyList[1].name"));
+		Assert.assertEquals(1, messages.get("familyList[1].name").size());
 		validationEngine.unregisterAll();
 	}
 

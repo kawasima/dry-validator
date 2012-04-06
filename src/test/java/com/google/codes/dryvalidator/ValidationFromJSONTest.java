@@ -52,9 +52,9 @@ public class ValidationFromJSONTest {
 
 		@SuppressWarnings("unchecked")
 		Map<String, List<String>> messages2 = validationEngine.exec(formValues);
-		Assert.assertNotNull(messages2.get("children[].name"));
-		Assert.assertEquals(1, messages2.get("children[].name").size());
-		Assert.assertTrue("繰り返しのメッセージ", messages2.get("children[].name").get(0).startsWith("1人目"));
+		Assert.assertNotNull(messages2.get("children[0].name"));
+		Assert.assertEquals(1, messages2.get("children[0].name").size());
+		Assert.assertTrue("繰り返しのメッセージ", messages2.get("children[0].name").get(0).startsWith("1人目"));
 		validationEngine.unregisterAll();
 	}
 }
