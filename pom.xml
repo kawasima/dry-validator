@@ -23,9 +23,9 @@
 	</distributionManagement>
 
 	<scm>
-		<url>scm:git:git@github.com:kawasima/dry-validator.git</url>
-		<connection>scm:git:git@github.com:kawasima/dry-validator.git</connection>
-		<developerConnection>scm:git:git@github.com:kawasima/dry-validator.git</developerConnection>
+		<url>scm:git:git://github.com/kawasima/dry-validator.git</url>
+		<connection>scm:git:git://github.com/kawasima/dry-validator.git</connection>
+		<developerConnection>scm:git:git://github.com/kawasima/dry-validator.git</developerConnection>
 	</scm>
 
 
