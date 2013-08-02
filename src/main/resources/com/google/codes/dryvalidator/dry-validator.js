@@ -1,177 +1,157 @@
 var dryValidatorModuleName;
 (function(moduleName) {
-Module(moduleName, function(m) {
-	m.format = function(format) {
+    var DV = {};
+	DV.format = function(format) {
 		var args = arguments;
 		return format
 			.replace(/\{(\d+)\}/g, function(m,c) { return args[parseInt(c)+1]})
 			.replace("{count}", this.meta && this.meta.isa && this.meta.isa(m.Validator) ? this.getCount() : "");
 	};
 
-	Class("Form", {
-		has: {
-			formItems: { is: "rw", init: {} }
-		},
-		after: {
-			initialize: function() { m.currentForm = this }
-		},
-		methods: {
-			_isFormItem: function (el) {
-				if (!el || !el.name || !el.getAttribute("name")) return false;
-				return (el.tagName == "input" || el.tagName == "INPUT")
-						|| (el.tagName == "textarea" || el.tagName == "TEXTAREA")
-						|| (el.tagName == "select" || el.tagName == "SELECT");
-			},
-			_putValue: function (el, value, multiple) {
-				var ctx = this.formItems;
-				var names = el.getAttribute("name").split("\.");
-				var propName = names.pop();
-				Joose.A.each(names, function (n) {
-					// for Nested properties (e.g. foo[0].bar[1].name)
-					if (n.match(/^(.+)\[(\d+)\]$/)) {
-						n = RegExp.$1;
-						var idx = RegExp.$2;
-						if (!ctx[n])
-							ctx[n] = new Array();
-						for (var i=ctx[n].length; i <= idx; i++)
-							ctx[n].push({});
-						ctx = ctx[n][idx];
-					} else {
-						if (!ctx[n])
-							ctx[n] = {};
-						ctx = ctx[n];
-					}
-				});
-				if (typeof(ctx[propName]) == 'undefined') {
-					ctx[propName] = undefined;
-				}
-				if (typeof(value) != 'undefined') {
-					if (multiple) {
-						if (!(ctx[propName] instanceof Array))
-							ctx[propName] = (ctx[propName]) ? [ctx[propName]] : [];
-						ctx[propName].push(value);
-					} else {
-						ctx[propName] = value;
-					}
-				}
-			},
-			_getValue: function (node, multiple) {
-				if (node.getAttribute("type") == "radio" || node.getAttribute("type") == "checkbox") {
-					if (node.checked) {
-						var val = node.value;
-						return val == "true" ? true : val;
-					}
-				} else if (node.name == "select" || node.name == "SELECT"){
-					var name = node.getAttribute("name");
-					var options = node.getElementsByTagName("option");
-					var values = [];
-					Joose.A.each(options, function(option) {
-						if (option.selected) {
-							values.push(option.value);
-						}
-					});
-					return (multiple) ? values : values.pop();
-				} else {
-					return node.value;
-				}
-			},
-			_isMultiple: function(el, exists) {
-				return ((el.tagName == "select" || el.tagName == "SELECT") && el.getAttribute("multiple"))
-						|| ((el.getAttribute("type") == "checkbox" || el.getAttribute("type") == "CHECKBOX") && exists)
-			},
-			setup: function(forms) {
-				var self = this;
-				this.formItems = {};
-				if (!(forms instanceof Array))
-					forms = [forms];
-				Joose.A.each(forms, function (f) {
-					var form = typeof(f.nodeType) == 'number' ? f : document.getElementById(f);
-					var exists = {};
-					Joose.A.each(form.getElementsByTagName("*"), function(item) {
-						if (self._isFormItem(item)){
-							var name = item.getAttribute("name")
-							var multiple = self._isMultiple(item, exists[name]);
-							self._putValue(item, self._getValue(item, multiple), multiple);
-							exists[name] = 1;
-						}
-					});
-				});
+	Form = DV.Form = function() {
 
-				return this;
-			}
-		}
+	}
+	_.extend(Form.prototype, {} {
+        _isFormItem: function (el) {
+            if (!el || !el.name || !el.getAttribute("name")) return false;
+            return (el.tagName == "input" || el.tagName == "INPUT")
+                    || (el.tagName == "textarea" || el.tagName == "TEXTAREA")
+                    || (el.tagName == "select" || el.tagName == "SELECT");
+        },
+        _putValue: function (el, value, multiple) {
+            var ctx = this.formItems;
+            var names = el.getAttribute("name").split("\.");
+            var propName = names.pop();
+            _.each(names, function (n) {
+                // for Nested properties (e.g. foo[0].bar[1].name)
+                if (n.match(/^(.+)\[(\d+)\]$/)) {
+                    n = RegExp.$1;
+                    var idx = RegExp.$2;
+                    if (!ctx[n])
+                        ctx[n] = new Array();
+                    for (var i=ctx[n].length; i <= idx; i++)
+                        ctx[n].push({});
+                    ctx = ctx[n][idx];
+                } else {
+                    if (!ctx[n])
+                        ctx[n] = {};
+                    ctx = ctx[n];
+                }
+            });
+            if (typeof(ctx[propName]) == 'undefined') {
+                ctx[propName] = undefined;
+            }
+            if (typeof(value) != 'undefined') {
+                if (multiple) {
+                    if (!(ctx[propName] instanceof Array))
+                        ctx[propName] = (ctx[propName]) ? [ctx[propName]] : [];
+                    ctx[propName].push(value);
+                } else {
+                    ctx[propName] = value;
+                }
+            }
+        },
+        _getValue: function (node, multiple) {
+            if (node.getAttribute("type") == "radio" || node.getAttribute("type") == "checkbox") {
+                if (node.checked) {
+                    var val = node.value;
+                    return val == "true" ? true : val;
+                }
+            } else if (node.name == "select" || node.name == "SELECT"){
+                var name = node.getAttribute("name");
+                var options = node.getElementsByTagName("option");
+                var values = [];
+                _.each(options, function(option) {
+                    if (option.selected) {
+                        values.push(option.value);
+                    }
+                });
+                return (multiple) ? values : values.pop();
+            } else {
+                return node.value;
+            }
+        },
+        _isMultiple: function(el, exists) {
+            return ((el.tagName == "select" || el.tagName == "SELECT") && el.getAttribute("multiple"))
+                    || ((el.getAttribute("type") == "checkbox" || el.getAttribute("type") == "CHECKBOX") && exists)
+        },
+        setup: function(forms) {
+            var self = this;
+            this.formItems = {};
+            if (!(forms instanceof Array))
+                forms = [forms];
+            _.each(forms, function (f) {
+                var form = typeof(f.nodeType) == 'number' ? f : document.getElementById(f);
+                var exists = {};
+                _.each(form.getElementsByTagName("*"), function(item) {
+                    if (self._isFormItem(item)){
+                        var name = item.getAttribute("name")
+                        var multiple = self._isMultiple(item, exists[name]);
+                        self._putValue(item, self._getValue(item, multiple), multiple);
+                        exists[name] = 1;
+                    }
+                });
+            });
+
+            return this;
+        }
+    });
+
+    var CharacterClass = DV.CharacterClass = function(options) {
+        this.name  = options['name'];
+        this.label = options['label'];
+        this.regex = options['regex'];
+    };
+
+    CharacterClass.get = function() {
+        var cc = this.instances[name];
+        if(!cc) throw "Can't find " + name;
+        return cc;
+    };
+    CharacterClass.register = function(name, label, regex){
+        if(!this.instances)
+            this.instances = {};
+
+        if(name.indexOf("+") > 0) {
+            // 合成文字クラス
+            var names = name.split(/\+/);
+            var regexes = [];
+            _.each(names, function(name) {
+                var cc = CharacterClass.get(name);
+                regexes.push(cc.getRegex());
+            });
+            this.instances[name] =
+                new CharacterClass({name:name, label:label,
+                    regex: '('+regexes.join('|')+')'});
+        } else {
+            // 通常の文字クラス
+            this.instances[name] =
+                new m.CharacterClass({name:name, label:label, regex:regex});
+        }
+    };
+
+    _.extend(CharacterClass.prototype, {} , {
+        match: function(value) {
+            var re = new RegExp("^"+ this.regex +"*$");
+            return value.match(re);
+        }
 	});
 
-	Class("CharacterClass");
-	Class("CharacterClass", {
-		has: {
-			name:  { is: "rw" },
-			label: { is: "rw" },
-			regex: { is: "rw" },
-			instances: { is: "ro", persistent: true}
-		},
-		classMethods: {
-			enable: function(names) {
-				if(arguments.length == 0) {
-					return this.meta.enabled;
-				}
-				this.meta.enabled = [];
-				if(!(names instanceof Array)) {
-					names = [ names ];
-				}
-				for(var i=0; i<names.length; i++) {
-					if(this.instances[names[i]]) {
-						this.meta.enabled.push(names[i]);
-					}
-				}
-			},
-			register: function(name, label, regex){
-				if(!this.instances)
-					this.instances = {};
+	CharacterClass.register("Katakana", "カタカナ", "[ァ-ヶー]");
+	CharacterClass.register("Hiragana", "ひらがな", "[あ-んー]");
+	CharacterClass.register("Zenkaku", "全角文字", "[^\u0000-\u007f]")
+	CharacterClass.register("Lower", "小文字の英字", "[a-z]");
 
-				if(name.indexOf("+") > 0) {
-					// 合成文字クラス
-					var names = name.split(/\+/);
-					var regexes = [];
-					Joose.A.each(names, function(name) {
-						var cc = m.CharacterClass.get(name);
-						regexes.push(cc.getRegex());
-					});
-					this.instances[name] =
-						new m.CharacterClass({name:name, label:label,
-							regex: '('+regexes.join('|')+')'});
-				} else {
-					// 通常の文字クラス
-					this.instances[name] =
-						new m.CharacterClass({name:name, label:label, regex:regex});
-				}
-			},
-			get: function(name) {
-				var cc = this.instances[name];
-				if(!cc) throw "Can't find " + name;
-				return cc;
-			}
-		},
-		methods: {
-			match: function(value) {
-				var re = new RegExp("^"+ this.regex +"*$");
-				return value.match(re);
-			}
-		}
+	CharacterClass.register("Upper", "大文字の英字", "[A-Z]");
+	CharacterClass.register("Alpha", "アルファベット", "[A-Za-z]");
+	CharacterClass.register("Digit", "半角数字", "[0-9]");
+	CharacterClass.register("Alnum", "半角英数字", "[A-Za-z0-9]");
+	CharacterClass.register("Punct", "記号", '[!"#\$%&\'\\(\\)\\*\\+,\\-\\.\\/:;<=>\\?@\\[\\\\\\]\\^_\\`\\{\\|\\}\\~]');
+	CharacterClass.register("Alnum+Punct", "半角英数記号");
 
-	});
-	m.CharacterClass.register("Katakana", "カタカナ", "[ァ-ヶー]");
-	m.CharacterClass.register("Hiragana", "ひらがな", "[あ-んー]");
-	m.CharacterClass.register("Zenkaku", "全角文字", "[^\u0000-\u007f]")
-	m.CharacterClass.register("Lower", "小文字の英字", "[a-z]");
+    var Validator = DV.Validator = function() {
 
-	m.CharacterClass.register("Upper", "大文字の英字", "[A-Z]");
-	m.CharacterClass.register("Alpha", "アルファベット", "[A-Za-z]");
-	m.CharacterClass.register("Digit", "半角数字", "[0-9]");
-	m.CharacterClass.register("Alnum", "半角英数字", "[A-Za-z0-9]");
-	m.CharacterClass.register("Punct", "記号", '[!"#\$%&\'\\(\\)\\*\\+,\\-\\.\\/:;<=>\\?@\\[\\\\\\]\\^_\\`\\{\\|\\}\\~]');
-	m.CharacterClass.register("Alnum+Punct", "半角英数記号");
-
+    }
 	Class("Validator", {
 		has: {
 			label: { is: "rw" },
@@ -220,7 +200,7 @@ Module(moduleName, function(m) {
 			_findValidator: function (id) {
 				var validator = this.validators[id];
 				if (!validator) {
-					Joose.O.each(this.validators, function(v, vid) {
+				    _.pairs(this.validators).each(function(v, vid) {
 						var re = new RegExp("^"+vid+"$");
 						if (re.exec(id))
 							validator = v;
@@ -240,7 +220,7 @@ Module(moduleName, function(m) {
 					}
 				} else if (value != null && typeof(value) == 'object') {
 					var self = this;
-					Joose.O.each(value, function (v, k) {
+					_.pairs(value).each(function (v, k) {
 						self._execute(v, id + "." + k, counts);
 					});
 				} else {
@@ -262,7 +242,7 @@ Module(moduleName, function(m) {
 				var self = this;
 				this._messages = {};
 				this._form = form;
-				Joose.O.each(this._form, function(value, id) {
+				_.pairs(this._form).each(function(value, id) {
 					self._execute(value, id);
 				});
 				return this._messages;
