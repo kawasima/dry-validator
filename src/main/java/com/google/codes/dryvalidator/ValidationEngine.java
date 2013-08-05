@@ -49,7 +49,7 @@ public class ValidationEngine {
 		ctx = contextFactory.enterContext();
 		global = ctx.initStandardObjects();
 		try {
-			loadScript("com/google/codes/dryvalidator/joose.js");
+			loadScript("com/google/codes/dryvalidator/underscore.js");
 			loadScript("com/google/codes/dryvalidator/dry-validator.js");
 			if (customScriptPath != null)
 				loadScript(customScriptPath);
@@ -82,7 +82,7 @@ public class ValidationEngine {
 		ScriptableObject.putProperty(local, "formItem", wrappedValidation);
 		executeScript(
 				"var validation = { label: formItem.label, messageDecorator: formItem.messageDecorator };\n"
-						+ "Joose.A.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
+						+ "_.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
 						+ "executor.addValidator(formItem.id, DRYValidator.CompositeValidator.make(validation));\n",
 				local);
 	}
@@ -95,7 +95,7 @@ public class ValidationEngine {
 		ScriptableObject.putProperty(local, "formItem", wrappedValidation);
 		executeScript(
 				"var validation = { label: formItem.label, messageDecorator: formItem.messageDecorator };\n"
-						+ "Joose.A.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
+						+ "_.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
 						+ "executor.addValidator(formItem.id, DRYValidator.CompositeValidator.make(validation));\n",
 				local);
 	}

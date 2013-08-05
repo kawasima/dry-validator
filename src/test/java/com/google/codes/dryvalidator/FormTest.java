@@ -29,7 +29,7 @@ public class FormTest {
 	@Test
 	public void createForm() throws IOException, URISyntaxException {
 		ctx.evaluateString(scope, FileUtils.readFileToString(new File(
-				"src/main/resources/com/google/codes/dryvalidator/joose.js")), "joose.js", 1, null);
+				"src/main/resources/com/google/codes/dryvalidator/underscore.js")), "underscore.js", 1, null);
 		ctx.evaluateString(scope, FileUtils.readFileToString(new File(
 				"src/main/resources/com/google/codes/dryvalidator/dry-validator.js"), "UTF-8"), "dry-validator.js", 1, null);
 		ctx.evaluateString(scope, FileUtils.readFileToString(new File(

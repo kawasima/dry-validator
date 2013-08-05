@@ -1,17 +1,25 @@
 var dryValidatorModuleName;
 (function(moduleName) {
-    var DV = {};
+    var root = this;
+    var DV;
+    if (typeof exports !== 'undefined') {
+        DV = exports;
+    } else {
+        DV = root[moduleName] = {};
+    }
+
 	DV.format = function(format) {
 		var args = arguments;
 		return format
 			.replace(/\{(\d+)\}/g, function(m,c) { return args[parseInt(c)+1]})
-			.replace("{count}", this.meta && this.meta.isa && this.meta.isa(m.Validator) ? this.getCount() : "");
+			.replace("{count}", (this.getCount) ? this.getCount() : "");
 	};
 
 	Form = DV.Form = function() {
 
-	}
-	_.extend(Form.prototype, {} {
+	};
+
+	_.extend(Form.prototype, {}, {
         _isFormItem: function (el) {
             if (!el || !el.name || !el.getAttribute("name")) return false;
             return (el.tagName == "input" || el.tagName == "INPUT")
@@ -103,7 +111,7 @@ var dryValidatorModuleName;
         this.regex = options['regex'];
     };
 
-    CharacterClass.get = function() {
+    CharacterClass.get = function(name) {
         var cc = this.instances[name];
         if(!cc) throw "Can't find " + name;
         return cc;
@@ -118,7 +126,7 @@ var dryValidatorModuleName;
             var regexes = [];
             _.each(names, function(name) {
                 var cc = CharacterClass.get(name);
-                regexes.push(cc.getRegex());
+                regexes.push(cc.regex);
             });
             this.instances[name] =
                 new CharacterClass({name:name, label:label,
@@ -126,7 +134,7 @@ var dryValidatorModuleName;
         } else {
             // 通常の文字クラス
             this.instances[name] =
-                new m.CharacterClass({name:name, label:label, regex:regex});
+                new CharacterClass({name:name, label:label, regex:regex});
         }
     };
 
@@ -149,418 +157,373 @@ var dryValidatorModuleName;
 	CharacterClass.register("Punct", "記号", '[!"#\$%&\'\\(\\)\\*\\+,\\-\\.\\/:;<=>\\?@\\[\\\\\\]\\^_\\`\\{\\|\\}\\~]');
 	CharacterClass.register("Alnum+Punct", "半角英数記号");
 
-    var Validator = DV.Validator = function() {
+    var Validator = DV.Validator = {
+        validate: function() {},
+        getValue: function(id) {
+            var self = this;
+            var ctx = this.context;
+            _.each(id.split("\."), function (n, i) {
+                if (n.match(/^(.+)\[(\d+)?\]$/)) {
+                    n = RegExp.$1;
+                    var idx = RegExp.$2;
+                    if (idx == "" || typeof(idx) == 'undefined')
+                        idx = self.counts[i]-1;
+                    ctx = ctx[n][idx];
+                } else {
+                    ctx = ctx[n];
+                }
+            });
+            return ctx;
+        },
+        getCount: function(depth) {
+            if (typeof(depth) === 'undefined')
+                depth = 0;
+            if (!this.counts || this.counts.length == 0) {
+                return 0;
+            } else {
+                return this.counts[this.counts.length - 1 + depth];
+            }
+        }
+    };
 
-    }
-	Class("Validator", {
-		has: {
-			label: { is: "rw" },
-			messageFormat: { is:"rw" },
-			context: { is: "rw" },
-			counts: { is: "rw" }
-		},
-		methods: {
-			validate: Joose.emptyFunction,
-			getValue: function(id) {
-				var self = this;
-				var ctx = this.context;
-				Joose.A.each(id.split("\."), function (n, i) {
-					if (n.match(/^(.+)\[(\d+)?\]$/)) {
-						n = RegExp.$1;
-						var idx = RegExp.$2;
-						if (idx == "" || typeof(idx) == 'undefined')
-							idx = self.counts[i]-1;
-						ctx = ctx[n][idx];
-					} else {
-						ctx = ctx[n];
-					}
-				});
-				return ctx;
-			},
-			getCount: function(depth) {
-				if (typeof(depth) == 'undefined')
-					depth = 0;
-				if (!this.counts || this.counts.length == 0) {
-					return 0;
-				} else {
-					return this.counts[this.counts.length - 1 + depth];
-				}
-			}
-		}
+    var Executor = DV.Executor = function() {
+        this.validators = [];
+    };
+	_.extend(Executor.prototype, {}, {
+        addValidator: function (id, validator) {
+            this.validators[id] = validator;
+        },
+        _findValidator: function (id) {
+            var validator = this.validators[id];
+            if (!validator) {
+                _.chain(this.validators).pairs().each(function(pairs) {
+                    var re = new RegExp("^"+pairs[0]+"$");
+                    if (re.exec(id))
+                        validator = pairs[1];
+                });
+            }
+            return validator;
+        },
+        _execute: function(value, id, counts) {
+            if (!counts)
+                counts = [];
+
+            if (value instanceof Array) {
+                for (var i=0; i<value.length; i++) {
+                    counts.push(i+1);
+                    this._execute(value[i], id + "[]", counts);
+                    counts.pop();
+                }
+            } else if (value != null && typeof(value) == 'object') {
+                var self = this;
+                _.chain(value).pairs().each(function (pair) {
+                    self._execute(pair[1], id + "." + pair[0], counts);
+                });
+            } else {
+                var validator = this._findValidator(id);
+
+                if (validator) {
+                    validator.context = this._form;
+                    validator.counts = counts;
+                    var msgs = validator.validate(value);
+                    if (msgs) {
+                        var indexes = counts.slice(0);
+                        id = id.replace(/\[\]/g, function() { return "[" + (indexes.shift()-1) + "]" });
+                        this._messages[id] = this._messages[id] ? this._messages[id].concat(msgs) : msgs;
+                    }
+                }
+            }
+        },
+        execute: function (form) {
+            var self = this;
+            this._messages = {};
+            this._form = form;
+            _.chain(this._form).pairs().each(function(pair) {
+                self._execute(pair[1], pair[0]);
+            });
+            return this._messages;
+        }
+    });
+
+    var RequiredValidator = DV.RequiredValidator = function(options) {
+        if (options["label"]) this.label = options["label"];
+        this.messageFormat = "{0}は必須です。";
+    };
+
+	_.extend(RequiredValidator.prototype, Validator, {
+        setup: function(value){
+            this.required = (value == true || value == "true");
+        },
+        validate: function(value) {
+            if(this.required && (value == null || String(value) == "" || typeof(value) == "undefined")) {
+                return [DV.format.apply(this, [this.messageFormat, this.label])];
+            }
+        }
+    });
+
+    var MaxLengthValidator = DV.MaxLengthValidator = function(options) {
+        if (options["label"]) this.label = options["label"];
+        this.messageFormat = "{0}は{1}文字以内で入力してください。";
+    };
+
+    _.extend(MaxLengthValidator.prototype, Validator, {
+        setup: function(value) {
+            this.length = Number(value);
+        },
+        validate: function(value) {
+            if(value && value.toString().length > this.length) {
+                return [DV.format.apply(this, [this.messageFormat, this.label, this.length])];
+            }
+        }
+    });
+
+	var LetterTypeValidator = DV.LetterTypeValidator = function(options) {
+        if (options["label"]) this.label = options["label"];
+	    this.messageFormat = "{0}は{1}で入力してください。";
+	};
+
+	_.extend(LetterTypeValidator.prototype, Validator, {
+        setup: function(value) {
+            this.characterClass = CharacterClass.get(value);
+        },
+        validate: function(value) {
+            if(value && !this.characterClass.match(value.toString())) {
+                return [DV.format.apply(this, [this.messageFormat, this.label, this.characterClass.label])];
+            }
+        }
 	});
 
-	Class("Executor", {
-		has: {
-			validators: { is: "ro", init: function() { return {} } }
-		},
-		methods: {
-			addValidator: function (id, validator) {
-				this.validators[id] = validator;
-			},
-			_findValidator: function (id) {
-				var validator = this.validators[id];
-				if (!validator) {
-				    _.pairs(this.validators).each(function(v, vid) {
-						var re = new RegExp("^"+vid+"$");
-						if (re.exec(id))
-							validator = v;
-					});
-				}
-				return validator;
-			},
-			_execute: function(value, id, counts) {
-				if (!counts)
-					counts = [];
+    var RangeValidator = DV.RangeValidator = function(options) {
+        if (options["label"]) this.label = options["label"];
+        this.min = 0;
+        this.max = Number.MAX_VALUE;
+        this.messageFormat = null;
+        this.wittyMessageFormat = {
+            min:    "{0}は{1}以上の値でなくてはなりません。",
+            max:    "{0}は{1}以下の値でなくてはなりません。"
+        };
+    };
 
-				if (value instanceof Array) {
-					for (var i=0; i<value.length; i++) {
-						counts.push(i+1);
-						this._execute(value[i], id + "[]", counts);
-						counts.pop();
-					}
-				} else if (value != null && typeof(value) == 'object') {
-					var self = this;
-					_.pairs(value).each(function (v, k) {
-						self._execute(v, id + "." + k, counts);
-					});
-				} else {
-					var validator = this._findValidator(id);
+    _.extend(RangeValidator.prototype, Validator, {
+        setup: function(value) {
+            var obj = eval("("+value+")");
+            if(obj["min"])
+                this.min = obj["min"];
+            if(obj["max"])
+                this.max = obj["max"];
+        },
+        validate: function(value) {
+            if(!value)
+                return;
+            if(value < this.min || value > this.max) {
+                if(this.messageFormat)
+                    return [DV.format.apply(this, [this.messageFormat, this.label])];
+                else if (value < this.min)
+                    return [DV.format.apply(this, [this.wittyMessageFormat["min"], this.label, this.min])];
+                else if (value > this.max)
+                    return [DV.format.apply(this, [this.wittyMessageFormat["max"], this.label, this.max])];
+            }
+        }
 
-					if (validator) {
-						validator.setContext(this._form);
-						validator.setCounts(counts);
-						var msgs = validator.validate(value);
-						if (msgs) {
-							var indexes = counts.slice(0);
-							id = id.replace(/\[\]/g, function() { return "[" + (indexes.shift()-1) + "]" });
-							this._messages[id] = this._messages[id] ? this._messages[id].concat(msgs) : msgs;
-						}
-					}
-				}
-			},
-			execute: function (form) {
-				var self = this;
-				this._messages = {};
-				this._form = form;
-				_.pairs(this._form).each(function(value, id) {
-					self._execute(value, id);
-				});
-				return this._messages;
-			}
-		}
-	});
-	Class("RequiredValidator", {
-		isa: m.Validator,
-		has: {
-			required: { is: "rw", init: true }
-		},
-		after: {
-			initialize: function() { this.messageFormat = "{0}は必須です。"; }
-		},
-		methods: {
-			setup: function(value){
-				this.required = (value == true || value == "true");
-			},
-			validate: function(value) {
-				if(this.required && (value == null || String(value) == "" || typeof(value) == "undefined")) {
-					return [m.format.apply(this, [this.messageFormat, this.label])];
-				}
-			}
-		}
-	});
-	Class("MaxLengthValidator", {
-		isa: m.Validator,
-		has: {
-			length: { is: "rw" }
-		},
-		after: {
-			initialize: function() { this.messageFormat = "{0}は{1}文字以内で入力してください。"; }
-		},
-		methods: {
-			setup: function(value) {
-				this.length = Number(value);
-			},
-			validate: function(value) {
-				if(value && value.toString().length > this.length) {
-					return [m.format.apply(this, [this.messageFormat, this.label, this.length])];
-				}
-			}
-		}
-	});
-	Class("LetterTypeValidator", {
-		isa: m.Validator,
-		has: {
-			characterClass: { is: "rw", init: [] }
-		},
-		after: {
-			initialize: function() { this.messageFormat = "{0}は{1}で入力してください。"; }
-		},
-		methods: {
-			setup: function(value) {
-				this.characterClass = m.CharacterClass.get(value);
-			},
-			validate: function(value) {
-				if(value && !this.characterClass.match(value.toString())) {
-					return [m.format.apply(this, [this.messageFormat, this.label, this.characterClass.getLabel()])];
-				}
-			}
-		}
+    });
+
+    var SelectionValidator = DV.SelectionValidator = function(options) {
+        if (options["label"]) this.label = options["label"];
+        this.min = 0;
+        this.max = Number.MAX_VALUE;
+        this.messageFormat = null;
+        this.wittyMessageFormat = {
+            min:    "{0}は{1}個以上選択してください。",
+            max:    "{0}は{1}個までしか選択できません。",
+            minmax: "{0}は{1}個以上{2}個以下で選択してください。",
+            min1:   "{0}を選択してください。"
+        };
+    };
+
+	_.extend(SelectionValidator.prototype, Validator, {
+        setup: function(value) {
+            var obj = eval("("+value+")");
+            if(obj["min"])
+                this.min = obj["min"];
+            if(obj["max"])
+                this.max = obj["max"];
+        },
+        validate: function(value) {
+            // Valueがundefined,null,空文字の場合は空配列にする
+            // すなわち最小選択数が1以上の場合は空文字でも未選択になるということ
+            if (!(value instanceof Array))
+                value = [value];
+
+            var valueLen = 0;
+            if (value.length > 1 || !(value[0]==null || String(value[0]) == "" || typeof(value[0]) == "undefined")) {
+                valueLen = value.length;
+            }
+            if(valueLen < this.min || valueLen > this.max) {
+                if(this.messageFormat)
+                    return [DV.format.apply(this, [this.messageFormat, this.label])];
+
+                if (this.min > 0 && this.max < Number.MAX_VALUE)
+                    return [DV.format.apply(this, [this.wittyMessageFormat["minmax"], this.label, this.min, this.max])];
+                else if (this.min == 1)
+                    return [DV.format.apply(this, [this.wittyMessageFormat["min1"], this.label])];
+                else if (this.min > 0)
+                    return [DV.format.apply(this, [this.wittyMessageFormat["min"], this.label, this.min])];
+                else if (this.max < Number.MAX_VALUE)
+                    return [DV.format.apply(this, [this.wittyMessageFormat["max"], this.label, this.max])];
+            }
+        }
 	});
 
-	Class("RangeValidator", {
-		isa: m.Validator,
-		has: {
-			min: { is:"rw", init: 0 },
-			max: { is:"rw", init:Number.MAX_VALUE }
-		},
-		after: {
-			initialize: function() {
-				this.messageFormat = null;
-				this.wittyMessageFormat = {
-					min:    "{0}は{1}以上の値でなくてはなりません。",
-					max:    "{0}は{1}以下の値でなくてはなりません。"
-				}
-			}
-		},
-		methods: {
-			setup: function(value) {
-				var obj = eval("("+value+")");
-				if(obj["min"])
-					this.setMin(obj["min"]);
-				if(obj["max"])
-					this.setMax(obj["max"]);
-			},
-			validate: function(value) {
-				if(!value)
-					return;
-				if(value < this.min || value > this.max) {
-					if(this.messageFormat)
-						return [m.format.apply(this, [this.messageFormat, this.label])];
-					else if (value < this.min)
-						return [m.format.apply(this, [this.wittyMessageFormat["min"], this.label, this.min])];
-					else if (value > this.max)
-						return [m.format.apply(this, [this.wittyMessageFormat["max"], this.label, this.max])];
-				}
-			}
-		}
+	var FunctionValidator = DV.FunctionValidator = function(options) {
+        if (options["label"]) this.label = options["label"];
+	};
+
+	_.extend(FunctionValidator.prototype, Validator, {
+        setup: function(value) {
+            if(value instanceof Function) {
+                this.func = value;
+            } else {
+                eval('this.func = function(value){'+ value + '}');
+            }
+            if(!this.func instanceof Function)
+                throw "value must be Function.";
+        },
+        validate: function(value) {
+            return this.func.apply(this, [value]);
+        }
 	});
 
-	Class("SelectionValidator", {
-		isa: m.Validator,
-		has: {
-			min: { is:"rw", init: 0 },
-			max: { is:"rw", init: Number.MAX_VALUE },
-			wittyMessageFormat: { is:"rw" }
-		},
-		after: {
-			initialize: function() {
-				this.messageFormat = null;
-				this.wittyMessageFormat = {
-					min:    "{0}は{1}個以上選択してください。",
-					max:    "{0}は{1}個までしか選択できません。",
-					minmax: "{0}は{1}個以上{2}個以下で選択してください。",
-					min1:   "{0}を選択してください。"
-				}
-			}
-		},
-		methods: {
-			setup: function(value) {
-				var obj = eval("("+value+")");
-				if(obj["min"])
-					this.setMin(obj["min"]);
-				if(obj["max"])
-					this.setMax(obj["max"]);
-			},
-			validate: function(value) {
-				// Valueがundefined,null,空文字の場合は空配列にする
-				// すなわち最小選択数が1以上の場合は空文字でも未選択になるということ
-				if (!(value instanceof Array))
-					value = [value];
+	var CompositeValidator = DV.CompositeValidator = function() {
+        this.validators = [];
+        this.messageDecorator;
+	};
 
-				var valueLen = 0;
-				if (value.length > 1 || !(value[0]==null || String(value[0]) == "" || typeof(value[0]) == "undefined")) {
-					valueLen = value.length;
-				}
-				if(valueLen < this.min || valueLen > this.max) {
-					if(this.messageFormat)
-						return [m.format.apply(this, [this.messageFormat, this.label])];
+    CompositeValidator.make = function(obj) {
+        var self = new CompositeValidator();
+        self.label = obj['label'] || 'item';
+        delete(obj['label']);
 
-					if (this.min > 0 && this.max < Number.MAX_VALUE)
-						return [m.format.apply(this, [this.wittyMessageFormat["minmax"], this.label, this.min, this.max])];
-					else if (this.min == 1)
-						return [m.format.apply(this, [this.wittyMessageFormat["min1"], this.label])];
-					else if (this.min > 0)
-						return [m.format.apply(this, [this.wittyMessageFormat["min"], this.label, this.min])];
-					else if (this.max < Number.MAX_VALUE)
-						return [m.format.apply(this, [this.wittyMessageFormat["max"], this.label, this.max])];
-				}
-			}
-		}
-	});
-	Class("FunctionValidator", {
-		isa: m.Validator,
-		has: {
-			func: { is:"rw" }
-		},
-		after: {
-		},
-		methods: {
-			setup: function(value) {
-				if(value instanceof Function) {
-					this.func = value;
-				} else {
-					eval('this.func = function(value){'+ value + '}');
-				}
-				if(!this.func instanceof Function)
-					throw "value must be Function.";
-			},
-			validate: function(value) {
-				return this.func.apply(this, [value]);
-			}
-		}
-	});
+        if (typeof(obj['messageDecorator']) == "string" || obj['messageDecorator'] instanceof String) {
+            self.messageDecorator = eval("function (message) {" + obj['messageDecorator'] + "}");
+        } else if (typeof(obj['messageDecorator']) == "function") {
+            self.messageDecorator = obj['messageDecorator'];
+        }
+        delete(obj['messageDecorator']);
 
-	Class("CompositeValidator", {
-		isa: m.Validator,
-		has: {
-			validators: { is: "rw", init: function() {return [];} },
-			messageDecorator: { is: "rw" }
-		},
-		classMethods: {
-			make: function (obj) {
-				var self = new m.CompositeValidator();
-				self.label = obj['label'] || 'item';
-				delete(obj['label']);
+        _.chain(obj).keys().each(function(key) {
+            var validatorClass = DV[key.charAt(0).toUpperCase()
+                + key.substring(1)
+                + "Validator"];
+            if (validatorClass) {
+                var validator = new validatorClass({ label: self.label });
+                validator.setup(obj[key]);
+                self.validators.push(validator);
+            }
+        });
+        return self;
+    };
 
-				if (typeof(obj['messageDecorator']) == "string" || obj['messageDecorator'] instanceof String) {
-					self.setMessageDecorator(eval("function (message) {" + obj['messageDecorator'] + "}"));
-				} else if (typeof(obj['messageDecorator']) == "function") {
-					self.setMessageDecorator(obj['messageDecorator']);
-				}
-				delete(obj['messageDecorator']);
-
-				for (var key in obj) {
-					var validator = null;
-					Joose.A.each(m.meta._elements, function (element) {
-						if (element.meta.getName().match('\\.'+ Joose.S.uppercaseFirst(key) +'Validator$')) {
-							validator = element.meta.instantiate({label:self.label});
-						}
-					});
-					if (validator) {
-						validator.setup(obj[key]);
-						self.getValidators().push(validator);
-					}
-				}
-				return self;
-			}
-		},
-		methods: {
-			validate: function(value) {
-				var self = this;
-				var results = [];
-				Joose.A.each(this.validators, function(validator) {
-					validator.setCounts(self.getCounts());
-					validator.setContext(self.getContext());
-					var result = validator.validate(value);
-					if (result) {
-						Joose.A.each(result, function(msg) {
-							if (self.messageDecorator)
-								msg = self.messageDecorator(msg);
-							results.push(msg)
-						});
-					}
-				});
-				return results;
-			},
-			stringify: function() {
-				var res = "";
-				Joose.A.each(this.validators, function(validator) {
-					res += validator.toString() + ",";
-				});
-				return res;
-			}
-		}
-	});
+	_.extend(CompositeValidator.prototype, Validator, {
+        validate: function(value) {
+            var self = this;
+            var results = [];
+            _.each(this.validators, function(validator) {
+                validator.counts =  self.counts;
+                validator.context = self.context;
+                var result = validator.validate(value);
+                if (result) {
+                    _.each(result, function(msg) {
+                        if (self.messageDecorator)
+                            msg = self.messageDecorator(msg);
+                        results.push(msg);
+                    });
+                }
+            });
+            return results;
+        },
+        stringify: function() {
+            return _.reduce(this.validators, function(res, validator) {
+                res += validator.toString() + ",";
+            }, "");
+        }
+    });
 
 	// Copyright 2005-2007 Kawasaki Yusuke <u-suke@kawa.net>
-	Class("DOM", {
-		classMethods: {
-			parseElement: function(elem) {
-				if(elem.nodeType == 7) return;
+	var DOM = DV.DOM = {
+        parseElement: function(elem) {
+            if(elem.nodeType == 7) return;
 
-				if(elem.nodeType == 3 || elem.nodeType == 4) {
-					var bool = elem.nodeValue.match(/[^\x00-\x20]/);
-					if(bool == null) return;
-					return elem.nodeValue;
-				}
+            if(elem.nodeType == 3 || elem.nodeType == 4) {
+                var bool = elem.nodeValue.match(/[^\x00-\x20]/);
+                if(bool == null) return;
+                return elem.nodeValue;
+            }
 
-				var retval;
-				var cnt = {};
+            var retval;
+            var cnt = {};
 
-				if(elem.attributes && elem.attributes.length) {
-					retval = {};
-					for (var i=0; i<elem.attributes.length; i++) {
-						var key = elem.attributes[i].nodeName;
-						if(typeof(key) != "string") continue;
-						var val = elem.attributes[i].nodeValue;
-						if(!val) continue;
-						if(typeof(cnt[key]) == "undefined") cnt[key] = 0;
-						cnt[key]++;
-						this.addNode(retval, key, cnt[key], val);
-					}
-				}
+            if(elem.attributes && elem.attributes.length) {
+                retval = {};
+                for (var i=0; i<elem.attributes.length; i++) {
+                    var key = elem.attributes[i].nodeName;
+                    if(typeof(key) != "string") continue;
+                    var val = elem.attributes[i].nodeValue;
+                    if(!val) continue;
+                    if(typeof(cnt[key]) == "undefined") cnt[key] = 0;
+                    cnt[key]++;
+                    this.addNode(retval, key, cnt[key], val);
+                }
+            }
 
-				if(elem.childNodes && elem.childNodes.length) {
-					var textonly = true;
-					if (retval) textonly = false;
-					for (var i=0; i<elem.childNodes.length && textonly; i++) {
-						var ntype = elem.childNodes[i].nodeType;
-						if (ntype == 3 || ntype == 4) continue;
-						textonly = false;
-					}
-					if (textonly) {
-						if (!retval) retval = "";
-						for (var i=0; i<elem.childNodes.length; i++) {
-							retval += elem.childNodes[i].nodeValue;
-						}
-					} else {
-						if (!retval) retval = {};
-						for(var i=0; i<elem.childNodes.length; i++) {
-							var key = elem.childNodes[i].nodeName;
-							if (typeof(key) != "string") continue;
-							var val = this.parseElement(elem.childNodes[i]);
-							if (!val) continue;
-							if (typeof(cnt[key]) == "undefined") cnt[key] = 0;
-							cnt[key]++;
-							this.addNode(retval, key, cnt[key], val);
-						}
-					}
-				}
-				return retval;
-			},
-			addNode: function (hash, key, cnts, val){
-				if (this.usearray == true) {
-					if (cnts == 1) hash[key] = [];
-					hash[key][hash[key].length] = val;
-				} else if (this.usearray == false) {
-					if (cnts == 1) hash[key] = val;
-				} else if (this.usearray == null) {
-					if (cnts == 1) {
-						hash[key] = val;
-					} else if (cnts == 2) {
-						hash[key] = [ hash[key], val];
-					} else {
-						hash[key][hash[key].length] = val;
-					}
-				} else if (this.usearray[key]) {
-					if (cnts == 1) hash[key] = [];
+            if(elem.childNodes && elem.childNodes.length) {
+                var textonly = true;
+                if (retval) textonly = false;
+                for (var i=0; i<elem.childNodes.length && textonly; i++) {
+                    var ntype = elem.childNodes[i].nodeType;
+                    if (ntype == 3 || ntype == 4) continue;
+                    textonly = false;
+                }
+                if (textonly) {
+                    if (!retval) retval = "";
+                    for (var i=0; i<elem.childNodes.length; i++) {
+                        retval += elem.childNodes[i].nodeValue;
+                    }
+                } else {
+                    if (!retval) retval = {};
+                    for(var i=0; i<elem.childNodes.length; i++) {
+                        var key = elem.childNodes[i].nodeName;
+                        if (typeof(key) != "string") continue;
+                        var val = this.parseElement(elem.childNodes[i]);
+                        if (!val) continue;
+                        if (typeof(cnt[key]) == "undefined") cnt[key] = 0;
+                        cnt[key]++;
+                        this.addNode(retval, key, cnt[key], val);
+                    }
+                }
+            }
+            return retval;
+        },
+        addNode: function (hash, key, cnts, val){
+            if (this.usearray == true) {
+                if (cnts == 1) hash[key] = [];
+                hash[key][hash[key].length] = val;
+            } else if (this.usearray == false) {
+                if (cnts == 1) hash[key] = val;
+            } else if (this.usearray == null) {
+                if (cnts == 1) {
+                    hash[key] = val;
+                } else if (cnts == 2) {
+                    hash[key] = [ hash[key], val];
+                } else {
+                    hash[key][hash[key].length] = val;
+                }
+            } else if (this.usearray[key]) {
+                if (cnts == 1) hash[key] = [];
 
-					hash[key][hash[key].length] = val;
-				} else {
-					if (cnts == 1) hash[key] = val;
-				}
-			}
-		}
-	});
-});
+                hash[key][hash[key].length] = val;
+            } else {
+                if (cnts == 1) hash[key] = val;
+            }
+        }
+	};
 })(dryValidatorModuleName || "DRYValidator");

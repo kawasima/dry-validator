@@ -6,7 +6,7 @@
 	<title>Test DryValidator in a browser</title>
 	<script type="text/javascript">var dryValidatorModuleName="DV";</script>
 	<script type="text/javascript" src="jquery.js"></script>
-	<script type="text/javascript" src="../../../src/main/resources/com/google/codes/dryvalidator/joose.js"></script>
+	<script type="text/javascript" src="../../../src/main/resources/com/google/codes/dryvalidator/underscore.js"></script>
 	<script type="text/javascript" src="../../../src/main/resources/com/google/codes/dryvalidator/dry-validator.js"></script>
 </head>
 <body>
@@ -100,7 +100,7 @@ $(document).ready(function() {
 		success: function(data) {
 			$.each(data, function(i, formItem) {
 				var validation = {label: formItem.label};
-				Joose.A.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });
+				_.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });
 				executor.addValidator(formItem.id, DV.CompositeValidator.make(validation));
 			});
 		}, error: function(request, stat, t) {

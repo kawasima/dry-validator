@@ -34,7 +34,7 @@ public class ValidationFromJSONTest {
 		Context context = validationEngine.getContext();
 		ScriptableObject scope = validationEngine.getGlobalScope();
 		context.evaluateString(scope, "var defs = ("+ json +");" +
-				"Joose.O.each(defs, function(v,id) { executor.addValidator(id, DRYValidator.CompositeValidator.make(v)) })", "<cmd>", 1, null);
+				"_.each(_.pairs(defs), function(pair) { executor.addValidator(pair[0], DRYValidator.CompositeValidator.make(pair[1])) });", "<cmd>", 1, null);
 	}
 
 	@Test
@@ -54,6 +54,7 @@ public class ValidationFromJSONTest {
 		Map<String, List<String>> messages2 = validationEngine.exec(formValues);
 		Assert.assertNotNull(messages2.get("children[0].name"));
 		Assert.assertEquals(1, messages2.get("children[0].name").size());
+        System.err.println(messages2.get("children[0].name").get(0));
 		Assert.assertTrue("繰り返しのメッセージ", messages2.get("children[0].name").get(0).startsWith("1人目"));
 		validationEngine.unregisterAll();
 	}
