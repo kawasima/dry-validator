@@ -1,11 +1,7 @@
 package com.google.codes.dryvalidator;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.google.codes.dryvalidator.dto.FormItem;
+import com.google.codes.dryvalidator.dto.Validation;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -13,8 +9,11 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 
-import com.google.codes.dryvalidator.dto.FormItem;
-import com.google.codes.dryvalidator.dto.Validation;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class ValidationEngineTest {
@@ -114,13 +113,17 @@ public class ValidationEngineTest {
 
 
 	public void characterClassを動かす() {
-		Context ctx = validationEngine.getContext();
-		ScriptableObject scope = validationEngine.getGlobalScope();
+		Context ctx = Context.enter();
+        try {
+            ScriptableObject scope = validationEngine.getGlobalScope();
 
-		ctx.evaluateString(scope,
-			"DRYValidator.CharacterClass.enable(['Hiragana', 'Katakana', 'Unknown']);"
-			+ "console.log('enable='+DRYValidator.CharacterClass.enable());"
-				, "<cmd>", 1, null);
+            ctx.evaluateString(scope,
+                "DRYValidator.CharacterClass.enable(['Hiragana', 'Katakana', 'Unknown']);"
+                + "console.log('enable='+DRYValidator.CharacterClass.enable());"
+                    , "<cmd>", 1, null);
+        } finally {
+            Context.exit();
+        }
 	}
 
 	@Test
