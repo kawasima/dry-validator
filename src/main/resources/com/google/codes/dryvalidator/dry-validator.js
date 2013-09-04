@@ -401,16 +401,13 @@ var dryValidatorModuleName;
     CompositeValidator.make = function(obj) {
         var self = new CompositeValidator();
         self.label = obj['label'] || 'item';
-        delete(obj['label']);
 
-        if (typeof(obj['messageDecorator']) == "string" || obj['messageDecorator'] instanceof String) {
+        if (_.isString(obj['messageDecorator'])) {
             self.messageDecorator = eval("function (message) {" + obj['messageDecorator'] + "}");
-        } else if (typeof(obj['messageDecorator']) == "function") {
+        } else if (_.isFunction(obj['messageDecorator'])) {
             self.messageDecorator = obj['messageDecorator'];
         }
-        delete(obj['messageDecorator']);
-
-        _.chain(obj).keys().each(function(key) {
+        _.chain(obj).keys().without('label', 'messageDecorator').each(function(key) {
             var validatorClass = DV[key.charAt(0).toUpperCase()
                 + key.substring(1)
                 + "Validator"];

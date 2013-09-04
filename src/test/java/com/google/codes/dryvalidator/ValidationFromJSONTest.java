@@ -8,15 +8,11 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class ValidationFromJSONTest {
 	protected static ValidationEngine validationEngine;
@@ -32,25 +28,20 @@ public class ValidationFromJSONTest {
 
 	private void register() throws IOException {
 		String json = FileUtils.readFileToString(new File("src/test/resources/validate.json"), "UTF-8");
-        Context context = Context.enter();
-        try {
-            ScriptableObject scope = validationEngine.getGlobalScope();
-            context.evaluateString(scope, "var defs = ("+ json +");" +
-                    "_.each(_.pairs(defs), function(pair) { executor.addValidator(pair[0], DRYValidator.CompositeValidator.make(pair[1])) });", "<cmd>", 1, null);
-        } finally {
-            Context.exit();
-        }
+        validationEngine.register((Map)JSON.decode(json));
 	}
 
 	@Test
     public void test() throws IOException, InterruptedException {
+        _test();
+        /*
         ExecutorService executorService = Executors.newFixedThreadPool(10);
         for (int i=0; i<10; i++) {
             executorService.execute(new Runnable() {
                 public void run() {
                     try {
                         validationEngine.setup();
-                        for(int j=0; j<5; j++)
+                        for (int j = 0; j < 5; j++)
                             _test();
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -58,6 +49,7 @@ public class ValidationFromJSONTest {
                 }
             });
         }
+        executorService.awaitTermination(1, TimeUnit.HOURS);*/
     }
 
 	private void _test() throws IOException {

@@ -1,6 +1,7 @@
 package com.google.codes.dryvalidator;
 
 import com.google.codes.dryvalidator.dto.FormItem;
+import com.google.codes.dryvalidator.util.JavaToJsUtil;
 import net.arnx.jsonic.JSON;
 import org.apache.commons.io.IOUtils;
 import org.mozilla.javascript.*;
@@ -15,6 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Validation engine.
+ *
+ * @author kawasima
+ */
 public class ValidationEngine {
 	private static final String DIGEST_ALGORITHM = "SHA-1";
 
@@ -23,7 +29,7 @@ public class ValidationEngine {
     ThreadLocal<Boolean> initialized = new ThreadLocal<Boolean>();
     ThreadLocal<ScriptableObject> global = new ThreadLocal<ScriptableObject>();
 
-	// コンパイル済みのJSをキャッシュしておく
+	/** compiled script cache*/
 	static final ConcurrentHashMap<String, Script> scriptCache = new ConcurrentHashMap<String, Script>(
 			10);
 
@@ -108,6 +114,27 @@ public class ValidationEngine {
             Context.exit();
         }
 	}
+
+    public void register(Map json) {
+        if (!isInitialized())
+            setup();
+
+        Context ctx = Context.enter();
+        try {
+            Scriptable local = ctx.newObject(global.get());
+            local.setPrototype(global.get());
+            local.setParentScope(null);
+            NativeObject object = JavaToJsUtil.convert(json, ctx, local);
+            ScriptableObject.putProperty(local, "validations", object);
+            executeScript(
+                    "_.chain(validations).pairs().each(function(pair) {" +
+                            "executor.addValidator(pair[0], DRYValidator.CompositeValidator.make(pair[1]));" +
+                            "});",
+                    local);
+        } finally {
+            Context.exit();
+        }
+    }
 
     public ScriptableObject getGlobalScope() {
         return global.get();

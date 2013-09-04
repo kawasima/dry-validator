@@ -20,13 +20,13 @@ public class ValidationEngineTest {
 	static ValidationEngine validationEngine;
 
 	@BeforeClass
-	public static void validationEngineを初期化する() {
+	public static void initializeValidationEngine() {
 		validationEngine = new ValidationEngine();
 		validationEngine.setup();
 	}
 
 	@AfterClass
-	public static void validationEngineを破棄する() {
+	public static void destroyValidationEngine() {
 		validationEngine.dispose();
 	}
 
