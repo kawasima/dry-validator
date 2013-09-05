@@ -1,7 +1,8 @@
-package com.google.codes.dryvalidator;
+package net.unit8.validator.dry;
 
 import junit.framework.Assert;
 import net.arnx.jsonic.JSON;
+import net.unit8.validator.dry.ValidationEngine;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.math.RandomUtils;

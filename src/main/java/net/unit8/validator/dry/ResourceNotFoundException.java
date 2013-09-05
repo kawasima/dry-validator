@@ -1,4 +1,4 @@
-package com.google.codes.dryvalidator;
+package net.unit8.validator.dry;
 
 import java.io.IOException;
 

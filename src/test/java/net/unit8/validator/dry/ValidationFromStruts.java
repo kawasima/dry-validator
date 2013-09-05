@@ -1,4 +1,4 @@
-package com.google.codes.dryvalidator;
+package net.unit8.validator.dry;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +9,7 @@ import java.util.Map;
 import junit.framework.Assert;
 import net.arnx.jsonic.JSON;
 
+import net.unit8.validator.dry.ValidationEngine;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.Field;
 import org.apache.commons.validator.Form;
@@ -18,11 +19,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.google.codes.dryvalidator.dto.FormItem;
-import com.google.codes.dryvalidator.dto.Validation;
+import net.unit8.validator.dry.dto.FormItem;
+import net.unit8.validator.dry.dto.Validation;
 
 public class ValidationFromStruts {
-	protected static ValidationEngine validationEngine;
+	private static ValidationEngine validationEngine;
 	@BeforeClass
 	public static void initailizeValidationEngine() {
 		validationEngine = new ValidationEngine();

@@ -1,4 +1,4 @@
-package com.google.codes.dryvalidator.util;
+package net.unit8.validator.dry.util;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArray;

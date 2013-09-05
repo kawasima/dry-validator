@@ -6,14 +6,14 @@
 	<title>Test DryValidator in a browser</title>
 	<script type="text/javascript">var dryValidatorModuleName="DV";</script>
 	<script type="text/javascript" src="jquery.js"></script>
-	<script type="text/javascript" src="../../../src/main/resources/com/google/codes/dryvalidator/underscore.js"></script>
-	<script type="text/javascript" src="../../../src/main/resources/com/google/codes/dryvalidator/dry-validator.js"></script>
+	<script type="text/javascript" src="../../../src/main/resources/net/unit8/validator/dry/underscore.js"></script>
+	<script type="text/javascript" src="../../../src/main/resources/net/unit8/validator/dry/dry-validator.js"></script>
 </head>
 <body>
 	<h1>Test</h1>
 	<div id="messageArea">
 	</div>
-	<form id="sampleForm">
+	<form id="sampleForm" action="">
 		<table summary="person">
 			<tr>
 				<th>氏名</th>
@@ -93,7 +93,7 @@
 	</form>
 	<script type="text/javascript">
 <!--
-$(document).ready(function() {
+$(function() {
 	var executor = new DV.Executor();
 	$.ajax({
 		url:'/formItem',
@@ -110,7 +110,7 @@ $(document).ready(function() {
 
 	$("#doValidate").click(function(){
 		var form = new DV.Form().setup("sampleForm");
-		var msg = executor.execute(form.getFormItems());
+		var msg = executor.execute(form.formItems);
 
 		var ul = $("<ul/>").appendTo($("#messageArea").empty());
 		for(var key in msg) {

@@ -1,7 +1,8 @@
-package com.google.codes.dryvalidator;
+package net.unit8.validator.dry;
 
-import com.google.codes.dryvalidator.dto.FormItem;
-import com.google.codes.dryvalidator.dto.Validation;
+import net.unit8.validator.dry.ValidationEngine;
+import net.unit8.validator.dry.dto.FormItem;
+import net.unit8.validator.dry.dto.Validation;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -17,7 +18,7 @@ import java.util.Map;
 
 
 public class ValidationEngineTest {
-	static ValidationEngine validationEngine;
+	private static ValidationEngine validationEngine;
 
 	@BeforeClass
 	public static void initializeValidationEngine() {

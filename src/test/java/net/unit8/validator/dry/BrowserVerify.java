@@ -1,10 +1,12 @@
-package com.google.codes.dryvalidator;
+package net.unit8.validator.dry;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -30,23 +32,24 @@ import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.ie.InternetExplorerDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
 
-import com.google.codes.dryvalidator.dto.FormItem;
-import com.google.codes.dryvalidator.dto.Validation;
+import net.unit8.validator.dry.dto.FormItem;
+import net.unit8.validator.dry.dto.Validation;
+import org.xml.sax.SAXException;
 
 public class BrowserVerify {
 
 	public static class FormItemHandler extends AbstractHandler {
 		@SuppressWarnings("unchecked")
-		private List<FormItem> getFormItem(String formName) {
+		private List<FormItem> getFormItem(String formName) throws IOException {
 			InputStream in = this.getClass().getResourceAsStream(
 					"/validation.xml");
 			ValidatorResources resources = null;
 			try {
 				resources = new ValidatorResources(in);
-			} catch (Exception e) {
-
+            } catch(SAXException e) {
+                throw new IOException(e);
 			} finally {
 				IOUtils.closeQuietly(in);
 			}
@@ -109,7 +112,7 @@ public class BrowserVerify {
 
 	@Test
 	public void ブラウザテスト() {
-		WebDriver driver = new InternetExplorerDriver();
+		WebDriver driver = new FirefoxDriver();
 		driver.get("http://127.0.0.1:8888/src/test/resources/validation.html");
 		driver.findElement(By.name("familyName")).sendKeys("長い文字ながーーーーい文字");
 		driver.findElement(By.name("firstName")).sendKeys("長い文字");

@@ -1,4 +1,4 @@
-package com.google.codes.dryvalidator.dto;
+package net.unit8.validator.dry.dto;
 
 import java.io.Serializable;
 
@@ -8,7 +8,7 @@ public class FormItem implements Serializable {
 	private String id;
 	private String label;
 	private String messageDecorator;
-	private Validations validations;
+	private final Validations validations;
 
 	public FormItem() {
 		this.validations = new Validations();

@@ -1,4 +1,4 @@
-package com.google.codes.dryvalidator;
+package net.unit8.validator.dry;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,8 +16,8 @@ import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.Main;
 
 public class FormTest {
-	Context ctx;
-	Scriptable scope;
+	private Context ctx;
+	private Scriptable scope;
 	@Before
 	public void setUp() {
 		ctx = Context.enter();

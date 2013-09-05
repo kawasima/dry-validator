@@ -1,7 +1,7 @@
-package com.google.codes.dryvalidator;
+package net.unit8.validator.dry;
 
-import com.google.codes.dryvalidator.dto.FormItem;
-import com.google.codes.dryvalidator.util.JavaToJsUtil;
+import net.unit8.validator.dry.dto.FormItem;
+import net.unit8.validator.dry.util.JavaToJsUtil;
 import net.arnx.jsonic.JSON;
 import org.apache.commons.io.IOUtils;
 import org.mozilla.javascript.*;
@@ -24,16 +24,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ValidationEngine {
 	private static final String DIGEST_ALGORITHM = "SHA-1";
 
-	Script getValidatorScript;
-	Script doValidateScript;
-    ThreadLocal<Boolean> initialized = new ThreadLocal<Boolean>();
-    ThreadLocal<ScriptableObject> global = new ThreadLocal<ScriptableObject>();
+    private final ThreadLocal<Boolean> initialized = new ThreadLocal<Boolean>();
+    private final ThreadLocal<ScriptableObject> global = new ThreadLocal<ScriptableObject>();
 
 	/** compiled script cache*/
 	static final ConcurrentHashMap<String, Script> scriptCache = new ConcurrentHashMap<String, Script>(
 			10);
 
-	public static class Console {
+	private static class Console {
 		public void log(Object obj) {
 			System.out.println(Context.toString(obj));
 		}
@@ -50,8 +48,8 @@ public class ValidationEngine {
 		global.set(ctx.initStandardObjects());
         initialized.set(Boolean.TRUE);
 		try {
-			loadScript("com/google/codes/dryvalidator/underscore.js");
-			loadScript("com/google/codes/dryvalidator/dry-validator.js");
+			loadScript("net/unit8/validator/dry/underscore.js");
+			loadScript("net/unit8/validator/dry/dry-validator.js");
 			if (customScriptPath != null)
 				loadScript(customScriptPath);
 
@@ -61,8 +59,7 @@ public class ValidationEngine {
 		} catch (IOException e) {
 			throw new ResourceNotFoundException(e);
 		} finally {
-            if (ctx != null)
-                Context.exit();
+            Context.exit();
         }
 		return this;
 	}
@@ -280,14 +277,14 @@ public class ValidationEngine {
 			md.reset();
 			md.update(input.getBytes());
 			byte[] digest = md.digest();
-			for (int i = 0; i < digest.length; i++) {
-				int d = digest[i] & 0xff;
-				String hex = Integer.toHexString(d);
-				if (hex.length() == 1) {
-					sb.append("0");
-				}
-				sb.append(hex);
-			}
+            for (byte aDigest : digest) {
+                int d = aDigest & 0xff;
+                String hex = Integer.toHexString(d);
+                if (hex.length() == 1) {
+                    sb.append("0");
+                }
+                sb.append(hex);
+            }
 		} catch (NoSuchAlgorithmException e) {
 			// ignore
 		}

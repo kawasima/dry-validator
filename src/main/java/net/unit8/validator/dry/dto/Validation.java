@@ -1,4 +1,4 @@
-package com.google.codes.dryvalidator.dto;
+package net.unit8.validator.dry.dto;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -10,7 +10,7 @@ public class Validation implements Serializable {
 	private String name;
 	private String value;
 
-	private List<String> messages = new ArrayList<String>();
+	private final List<String> messages = new ArrayList<String>();
 
 	public Validation(String name, String value) {
 		this.name = name;
