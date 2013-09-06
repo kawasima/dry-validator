@@ -4,16 +4,13 @@ import net.unit8.validator.dry.dto.FormItem;
 import net.unit8.validator.dry.util.JavaToJsUtil;
 import net.arnx.jsonic.JSON;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.mozilla.javascript.*;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -25,42 +22,72 @@ public class ValidationEngine {
 	private static final String DIGEST_ALGORITHM = "SHA-1";
 
     private final ThreadLocal<Boolean> initialized = new ThreadLocal<Boolean>();
-    private final ThreadLocal<ScriptableObject> global = new ThreadLocal<ScriptableObject>();
+    private Scriptable engineScope;
 
-	/** compiled script cache*/
-	static final ConcurrentHashMap<String, Script> scriptCache = new ConcurrentHashMap<String, Script>(
-			10);
+    private static final ScriptableObject global;
+    /** compiled script cache*/
+    private static final ConcurrentHashMap<String, Script> scriptCache = new ConcurrentHashMap<String, Script>(
+            10);
 
-	private static class Console {
+    private static NativeObject i18nResources;
+    static {
+        try {
+            Context ctx = Context.enter();
+            global = ctx.initStandardObjects();
+            ScriptableObject.putProperty(global, "console", Context.javaToJS(
+                    new Console(), global));
+            loadScript("net/unit8/validator/dry/underscore.js");
+            loadScript("net/unit8/validator/dry/i18next-1.6.3.js");
+            loadScript("net/unit8/validator/dry/dry-validator.js");
+        } finally {
+            Context.exit();
+        }
+    }
+
+	public static class Console {
+        public static String inspect(Object obj) {
+            if (obj instanceof NativeObject) {
+                NativeObject nObj = (NativeObject)obj;
+                List<String> properties = new ArrayList<String>(nObj.getAllIds().length);
+                for (Object id : nObj.getAllIds()) {
+                    properties.add(id + ": " + inspect(nObj.get(id)));
+                }
+                return "{" + StringUtils.join(properties, ",") + "}";
+            } else if (obj instanceof NativeArray) {
+                NativeArray arr = (NativeArray) obj;
+                List<String> elements = new ArrayList<String>(arr.size());
+                for (int i=0; i < arr.size(); i++) {
+                    elements.add(inspect(arr.get(i)));
+                }
+                return "[" + StringUtils.join(elements, ",") + "]";
+            } else if (obj instanceof Undefined) {
+                return "undefined";
+            } else {
+                return Context.toString(obj);
+            }
+        }
+
 		public void log(Object obj) {
-			System.out.println(Context.toString(obj));
+            System.err.println(inspect(obj));
 		}
 	}
 
 	public ValidationEngine() {
+        try {
+            Context ctx = Context.enter();
+            engineScope = ctx.newObject(global);
+            engineScope.setPrototype(global);
+            engineScope.setParentScope(global);
+        } finally {
+            Context.exit();
+        }
 	}
 
 	public ValidationEngine setup(String customScriptPath) {
-        if (isInitialized())
-            return this;
+        if (customScriptPath != null)
+            loadScript(customScriptPath);
 
-		Context ctx = Context.enter();
-		global.set(ctx.initStandardObjects());
-        initialized.set(Boolean.TRUE);
-		try {
-			loadScript("net/unit8/validator/dry/underscore.js");
-			loadScript("net/unit8/validator/dry/dry-validator.js");
-			if (customScriptPath != null)
-				loadScript(customScriptPath);
-
-			ScriptableObject.putProperty(global.get(), "console", Context.javaToJS(
-					new Console(), global.get()));
-			executeScript("var executor = new DRYValidator.Executor();", global.get());
-		} catch (IOException e) {
-			throw new ResourceNotFoundException(e);
-		} finally {
-            Context.exit();
-        }
+        executeScript("var executor = new DRYValidator.Executor();", engineScope);
 		return this;
 	}
 
@@ -68,84 +95,79 @@ public class ValidationEngine {
 		return setup(null);
 	}
 
+    public void setI18n(String i18nFilePath) {
+        InputStream in = null;
+        try {
+            Context ctx = Context.enter();
+            in = new FileInputStream(new File(i18nFilePath));
+            Map json = JSON.decode(in, (new LinkedHashMap<String, Object>()).getClass().getGenericSuperclass());
+            NativeObject messages = JavaToJsUtil.convert(json, ctx, global);
+        } catch (IOException e) {
+            throw new ResourceNotFoundException(e);
+        } finally {
+            IOUtils.closeQuietly(in);
+            Context.exit();
+        }
+
+    }
+
     public void dispose() {}
 
 	public void register() {
-        if (!isInitialized())
-            setup();
-
         Context ctx = Context.enter();
         try {
-            Scriptable local = ctx.newObject(global.get());
-            local.setPrototype(global.get());
-            local.setParentScope(null);
-            Object wrappedValidation = Context.javaToJS("String", local);
-            ScriptableObject.putProperty(local, "formItem", wrappedValidation);
+            Object wrappedValidation = Context.javaToJS("String", engineScope);
+            ScriptableObject.putProperty(engineScope, "formItem", wrappedValidation);
             executeScript(
                     "var validation = { label: formItem.label, messageDecorator: formItem.messageDecorator };\n"
                             + "_.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
                             + "executor.addValidator(formItem.id, DRYValidator.CompositeValidator.make(validation));\n",
-                    local);
+                    engineScope);
         } finally {
             Context.exit();
         }
 	}
 
 	public void register(FormItem formItem) {
-        if (!isInitialized())
-            setup();
-
-        Context ctx = Context.enter();
         try {
-            Scriptable local = ctx.newObject(global.get());
-            local.setPrototype(global.get());
-            local.setParentScope(null);
-            Object wrappedValidation = Context.javaToJS(formItem, local);
-            ScriptableObject.putProperty(local, "formItem", wrappedValidation);
+            Context ctx = Context.enter();
+            Object wrappedValidation = Context.javaToJS(formItem, engineScope);
+            ScriptableObject.putProperty(engineScope, "formItem", wrappedValidation);
             executeScript(
                     "var validation = { label: formItem.label, messageDecorator: formItem.messageDecorator };\n"
                             + "_.each(formItem.validations.validation, function(v) { validation[v.name] = v.value; });\n"
                             + "executor.addValidator(formItem.id, DRYValidator.CompositeValidator.make(validation));\n",
-                    local);
+                    engineScope);
         } finally {
             Context.exit();
         }
 	}
 
     public void register(Map json) {
-        if (!isInitialized())
-            setup();
-
-        Context ctx = Context.enter();
         try {
-            Scriptable local = ctx.newObject(global.get());
-            local.setPrototype(global.get());
-            local.setParentScope(null);
-            NativeObject object = JavaToJsUtil.convert(json, ctx, local);
-            ScriptableObject.putProperty(local, "validations", object);
+            Context ctx = Context.enter();
+            NativeObject object = JavaToJsUtil.convert(json, ctx, engineScope);
+            ScriptableObject.putProperty(engineScope, "validations", object);
+            ScriptableObject.putProperty(engineScope, "validators", ctx.newObject(engineScope));
             executeScript(
-                    "_.chain(validations).pairs().each(function(pair) {" +
+                    "executor.validators = validators;_.chain(validations).pairs().each(function(pair) {" +
                             "executor.addValidator(pair[0], DRYValidator.CompositeValidator.make(pair[1]));" +
                             "});",
-                    local);
+                    engineScope);
         } finally {
             Context.exit();
         }
     }
 
-    public ScriptableObject getGlobalScope() {
-        return global.get();
+    public Scriptable getGlobalScope() {
+        return global;
     }
 	public Map<String, List<String>> exec(Map<String, Object> formValues) {
-        if (!isInitialized())
-            setup();
-
-        Context ctx = Context.enter();
         try {
-            Scriptable local = ctx.newObject(global.get());
-            local.setPrototype(global.get());
+            Context ctx = Context.enter();
+            Scriptable local = ctx.newObject(engineScope);
+            local.setPrototype(engineScope);
             local.setParentScope(null);
-
             NativeObject formValuesObj = NativeObject.class.cast(ctx.newObject(local));
             for (Map.Entry<String, Object> entry : formValues.entrySet()) {
                 Object value = null;
@@ -166,7 +188,6 @@ public class ValidationEngine {
             Map<String, List<String>> messages = new HashMap<String, List<String>>();
             if (obj instanceof NativeObject) {
                 NativeObject nobj = NativeObject.class.cast(obj);
-                nobj.entrySet();
                 for (Map.Entry<Object, Object> e : nobj.entrySet()) {
                     if (e.getValue() instanceof NativeArray) {
                         NativeArray values = NativeArray.class.cast(e.getValue());
@@ -186,17 +207,14 @@ public class ValidationEngine {
 	}
 
 	public List<String> exec(String id, Object value) {
-        if (!isInitialized())
-            setup();
-
         Context ctx = Context.enter();
         try {
-            Scriptable local = ctx.newObject(global.get());
-            local.setPrototype(global.get());
+            Scriptable local = ctx.newObject(engineScope);
+            local.setPrototype(engineScope);
             local.setParentScope(null);
+
             ScriptableObject.putProperty(local, "id", Context.javaToJS(id, local));
-            ScriptableObject.putProperty(local, "value", Context.javaToJS(value,
-                    local));
+            ScriptableObject.putProperty(local, "value", Context.javaToJS(value, local));
 
             Object obj = executeScript("executor.validators[id].validate(value);", local);
 
@@ -215,11 +233,8 @@ public class ValidationEngine {
 	}
 
 	private Object executeScript(String scriptText, Scriptable scope) {
-        if (!isInitialized())
-            setup();
-
-        Context ctx = Context.enter();
         try {
+            Context ctx = Context.enter();
             String cacheKey = digest(scriptText);
             Script script = scriptCache.get(cacheKey);
             if (script == null) {
@@ -232,10 +247,7 @@ public class ValidationEngine {
         }
 	}
 
-	public void loadScript(String path) throws IOException {
-        if (!isInitialized())
-            setup();
-
+	public static void loadScript(String path) throws ResourceNotFoundException {
         Context ctx = Context.enter();
         try {
             Script script = scriptCache.get(path);
@@ -248,23 +260,22 @@ public class ValidationEngine {
                             "UTF-8");
                     script = ctx.compileReader(in, path, 0, null);
                     scriptCache.putIfAbsent(path, script);
+                } catch (IOException e) {
+                    throw new ResourceNotFoundException(e);
                 } finally {
                     IOUtils.closeQuietly(in);
                 }
             }
-            script.exec(ctx, global.get());
+            script.exec(ctx, global);
         } finally {
             Context.exit();
         }
 	}
 
 	public void unregisterAll() {
-        if (!isInitialized())
-            setup();
-
         Context ctx = Context.enter();
         try {
-            ctx.evaluateString(global.get(), "executor.validators = {};", "<cmd>", 1, null);
+            ctx.evaluateString(engineScope, "executor.validators = {};", "<cmd>", 1, null);
         } finally {
             Context.exit();
         }

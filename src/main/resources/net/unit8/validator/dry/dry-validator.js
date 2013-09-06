@@ -157,26 +157,28 @@ var dryValidatorModuleName;
 	CharacterClass.register("Punct", "記号", '[!"#\$%&\'\\(\\)\\*\\+,\\-\\.\\/:;<=>\\?@\\[\\\\\\]\\^_\\`\\{\\|\\}\\~]');
 	CharacterClass.register("Alnum+Punct", "半角英数記号");
 
-    var Validator = DV.Validator = {
-        validate: function() {},
+    var ValidatorContext = DV.ValidatorContext = function(form, counts) {
+        this.counts = counts;
+        this.form = form;
+    };
+    _.extend(ValidatorContext.prototype, {}, {
         getValue: function(id) {
-            var self = this;
-            var ctx = this.context;
+            var value = this.form;
             _.each(id.split("\."), function (n, i) {
                 if (n.match(/^(.+)\[(\d+)?\]$/)) {
                     n = RegExp.$1;
                     var idx = RegExp.$2;
                     if (idx == "" || typeof(idx) == 'undefined')
-                        idx = self.counts[i]-1;
-                    ctx = ctx[n][idx];
+                        idx = this.counts[i]-1;
+                    value = value[n][idx];
                 } else {
-                    ctx = ctx[n];
+                    value = value[n];
                 }
-            });
-            return ctx;
+            }, this);
+            return value;
         },
         getCount: function(depth) {
-            if (typeof(depth) === 'undefined')
+            if (_.isUndefined(depth))
                 depth = 0;
             if (!this.counts || this.counts.length == 0) {
                 return 0;
@@ -184,10 +186,14 @@ var dryValidatorModuleName;
                 return this.counts[this.counts.length - 1 + depth];
             }
         }
+    })
+
+    var Validator = DV.Validator = {
+        validate: function() {},
     };
 
     var Executor = DV.Executor = function() {
-        this.validators = [];
+        this.validators = {};
     };
 	_.extend(Executor.prototype, {}, {
         addValidator: function (id, validator) {
@@ -204,44 +210,52 @@ var dryValidatorModuleName;
             }
             return validator;
         },
-        _execute: function(value, id, counts) {
-            if (!counts)
-                counts = [];
-
-            if (value instanceof Array) {
+        _execute: function(id, value, context) {
+            if (_.isArray(value)) {
+                var msgs = {}
                 for (var i=0; i<value.length; i++) {
-                    counts.push(i+1);
-                    this._execute(value[i], id + "[]", counts);
-                    counts.pop();
+                    context.counts.push(i+1);
+                    _.extend(msgs, this._execute(id + "[]", value[i], context));
+                    context.counts.pop();
                 }
-            } else if (value != null && typeof(value) == 'object') {
-                var self = this;
-                _.chain(value).pairs().each(function (pair) {
-                    self._execute(pair[1], id + "." + pair[0], counts);
-                });
+                return msgs;
+            } else if (_.isObject(value)) {
+                return _.chain(value).pairs()
+                    .map(function(pair) {
+                        return this._execute(id + "." + pair[0], pair[1], context);
+                    }, this)
+                    .reduce(function(memo, msg) {
+                        return _.extend(memo, msg)
+                    }, {}).value();
             } else {
                 var validator = this._findValidator(id);
 
                 if (validator) {
-                    validator.context = this._form;
-                    validator.counts = counts;
-                    var msgs = validator.validate(value);
+                    var msgs = validator.validate(value, context);
                     if (msgs) {
-                        var indexes = counts.slice(0);
+                        var indexes = context.counts.slice(0);
                         id = id.replace(/\[\]/g, function() { return "[" + (indexes.shift()-1) + "]" });
-                        this._messages[id] = this._messages[id] ? this._messages[id].concat(msgs) : msgs;
+                        return _.reduce(msgs, function(memo, msg) {
+                            if (_.has(memo, id)) {
+                                memo[id].push(msg);
+                            } else {
+                                memo[id] = [msg];
+                            }
+                            return memo;
+                        }, {});
                     }
                 }
             }
         },
         execute: function (form) {
-            var self = this;
-            this._messages = {};
-            this._form = form;
-            _.chain(this._form).pairs().each(function(pair) {
-                self._execute(pair[1], pair[0]);
-            });
-            return this._messages;
+            var context = new ValidatorContext(form, []);
+            return _.chain(form).pairs()
+                .map(function(pair) {
+                    return this._execute(pair[0], pair[1], context)
+                }, this)
+                .reduce(function(memo, msgs) {
+                     return _.extend(memo, msgs);
+                }, {}).value();
         }
     });
 
@@ -421,21 +435,18 @@ var dryValidatorModuleName;
     };
 
 	_.extend(CompositeValidator.prototype, Validator, {
-        validate: function(value) {
-            var self = this;
+        validate: function(value, context) {
             var results = [];
             _.each(this.validators, function(validator) {
-                validator.counts =  self.counts;
-                validator.context = self.context;
-                var result = validator.validate(value);
+                var result = validator.validate(value, context);
                 if (result) {
                     _.each(result, function(msg) {
-                        if (self.messageDecorator)
-                            msg = self.messageDecorator(msg);
+                        if (this.messageDecorator)
+                            msg = this.messageDecorator.apply(context, [msg]);
                         results.push(msg);
-                    });
+                    }, this);
                 }
-            });
+            }, this);
             return results;
         },
         stringify: function() {

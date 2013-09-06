@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 import java.io.Serializable;
@@ -116,7 +117,7 @@ public class ValidationEngineTest {
 	public void characterClassを動かす() {
 		Context ctx = Context.enter();
         try {
-            ScriptableObject scope = validationEngine.getGlobalScope();
+            Scriptable scope = validationEngine.getGlobalScope();
 
             ctx.evaluateString(scope,
                 "DRYValidator.CharacterClass.enable(['Hiragana', 'Katakana', 'Unknown']);"

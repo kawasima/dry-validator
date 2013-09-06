@@ -77,6 +77,5 @@ public class ValidationFromStruts {
 		List<String> childrenNumMessages = messages.get("childrenNum");
 		Assert.assertTrue("配偶者がありのときは、子供の人数が必須になる", childrenNumMessages != null && childrenNumMessages.size() == 1);
 		validationEngine.unregisterAll();
-
 	}
 }
