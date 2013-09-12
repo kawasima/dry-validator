@@ -1,6 +1,5 @@
 package net.unit8.validator.dry;
 
-import net.unit8.validator.dry.ValidationEngine;
 import net.unit8.validator.dry.dto.FormItem;
 import net.unit8.validator.dry.dto.Validation;
 import org.junit.AfterClass;
@@ -9,7 +8,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -213,6 +211,22 @@ public class ValidationEngineTest {
 		validationEngine.unregisterAll();
 	}
 
+    @Test
+    public void validateByFunction() throws Exception {
+        FormItem formItem = new FormItem();
+        formItem.setId("name");
+        formItem.setLabel("Name");
+        formItem.getValidations().addValidation(new Validation("function",
+                "if(this.getValue('required') == 'true') { return (new DRYValidator.RequiredValidator({label: 'Name'})).setup(true).validate(value); }"));
+        validationEngine.register(formItem);
+        Map<String, Object> formValues = new HashMap<String, Object>();
+        formValues.put("required", "true");
+        formValues.put("name", "");
+        Map<String, List<String>> messages = validationEngine.exec(formValues);
+        Assert.assertTrue(messages.containsKey("name"));
+        Assert.assertEquals(1, messages.get("name").size());
+        validationEngine.unregisterAll();
+    }
 	public static class FamilyDto implements Serializable {
 		private static final long serialVersionUID = 1059538278850982523L;
 		public String name;

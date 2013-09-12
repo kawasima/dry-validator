@@ -35,8 +35,8 @@ public class ValidationFromJSONTest {
         String json = FileUtils.readFileToString(new File("src/test/resources/validate.json"), "UTF-8");
         validationEngine.register((Map)JSON.decode(json));
 
-        ExecutorService executorService = Executors.newFixedThreadPool(100);
-        for (int i=0; i<10000; i++) {
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        for (int i=0; i<1000; i++) {
             executorService.execute(new Runnable() {
                 public void run() {
                     try {

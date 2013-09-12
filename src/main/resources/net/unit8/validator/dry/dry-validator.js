@@ -267,8 +267,9 @@ var dryValidatorModuleName;
 	_.extend(RequiredValidator.prototype, Validator, {
         setup: function(value){
             this.required = (value == true || value == "true");
+            return this;
         },
-        validate: function(value) {
+        validate: function(value, context) {
             if(this.required && (value == null || String(value) == "" || typeof(value) == "undefined")) {
                 return [DV.format.apply(this, [this.messageFormat, this.label])];
             }
@@ -283,8 +284,9 @@ var dryValidatorModuleName;
     _.extend(MaxLengthValidator.prototype, Validator, {
         setup: function(value) {
             this.length = Number(value);
+            return this;
         },
-        validate: function(value) {
+        validate: function(value, context) {
             if(value && value.toString().length > this.length) {
                 return [DV.format.apply(this, [this.messageFormat, this.label, this.length])];
             }
@@ -299,8 +301,9 @@ var dryValidatorModuleName;
 	_.extend(LetterTypeValidator.prototype, Validator, {
         setup: function(value) {
             this.characterClass = CharacterClass.get(value);
+            return this;
         },
-        validate: function(value) {
+        validate: function(value, context) {
             if(value && !this.characterClass.match(value.toString())) {
                 return [DV.format.apply(this, [this.messageFormat, this.label, this.characterClass.label])];
             }
@@ -325,8 +328,9 @@ var dryValidatorModuleName;
                 this.min = obj["min"];
             if(obj["max"])
                 this.max = obj["max"];
+            return this;
         },
-        validate: function(value) {
+        validate: function(value, context) {
             if(!value)
                 return;
             if(value < this.min || value > this.max) {
@@ -361,8 +365,9 @@ var dryValidatorModuleName;
                 this.min = obj["min"];
             if(obj["max"])
                 this.max = obj["max"];
+            return this;
         },
-        validate: function(value) {
+        validate: function(value, context) {
             // Valueがundefined,null,空文字の場合は空配列にする
             // すなわち最小選択数が1以上の場合は空文字でも未選択になるということ
             if (!(value instanceof Array))
@@ -401,9 +406,10 @@ var dryValidatorModuleName;
             }
             if(!this.func instanceof Function)
                 throw "value must be Function.";
+            return this;
         },
-        validate: function(value) {
-            return this.func.apply(this, [value]);
+        validate: function(value, context) {
+            return this.func.apply(context, [value]);
         }
 	});
 
